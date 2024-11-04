@@ -17,6 +17,8 @@ from kombu import Queue, Exchange
 from conf.env import DATABASE_ENGINE, DATABASE_NAME, DATABASE_USER, DATABASE_PASSWORD, DATABASE_HOST, DATABASE_PORT, \
     REDIS_USERNAME, REDIS_PASSWORD, REDIS_HOST
 
+from conf.env import *
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -34,13 +36,14 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
+    # 'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
     "rest_framework",
+    "drf_yasg",
     "django_filters",
     'channels',
     "celery",
@@ -50,13 +53,14 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",  # 跨域中间件
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
 ROOT_URLCONF = 'application.urls'
@@ -123,10 +127,20 @@ USE_I18N = True
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.1/howto/static-files/
+# https://docs.djangoproject.com/en/3.2/howto/static-files/
+#
+STATIC_URL = "/static/"
+# # # 设置django的静态文件目录
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+]
 
-STATIC_URL = 'static/'
+# MEDIA_ROOT = "media"  # 项目下的目录
+# MEDIA_URL = "/media/"  # 跟STATIC_URL类似，指定用户可以通过这个url找到文件
 
+# 收集静态文件，必须将 MEDIA_ROOT,STATICFILES_DIRS先注释
+# python manage.py collectstatic
+# STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
@@ -257,12 +271,13 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticated",  # 只有经过身份认证确定用户身份才能访问
+        # "rest_framework.permissions.IsAuthenticated",  # 只有经过身份认证确定用户身份才能访问
         # 'rest_framework.permissions.IsAdminUser', # is_staff=True才能访问 —— 管理员(员工)权限
-        # 'rest_framework.permissions.AllowAny', # 允许所有
+        'rest_framework.permissions.AllowAny',  # 允许所有
         # 'rest_framework.permissions.IsAuthenticatedOrReadOnly', # 有身份 或者 只读访问(self.list,self.retrieve)
     ],
-    'DEFAULT_RENDERER_CLASSES': ('rest_framework.renderers.JSONRenderer',),
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.BrowsableAPIRenderer', 'rest_framework.renderers.JSONRenderer',),
     # "EXCEPTION_HANDLER": "dvadmin.utils.exception.CustomExceptionHandler",  # 自定义的异常处理
 }
 # ====================================#
@@ -287,7 +302,7 @@ SWAGGER_SETTINGS = {
     "OPERATIONS_SORTER": "alpha",
     "VALIDATOR_URL": None,
     "AUTO_SCHEMA_TYPE": 2,  # 分组根据url层级分，0、1 或 2 层
-    "DEFAULT_AUTO_SCHEMA_CLASS": "dvadmin.utils.swagger.CustomSwaggerAutoSchema",
+    # "DEFAULT_AUTO_SCHEMA_CLASS": "",
 }
 
 # Redis Cache
@@ -331,3 +346,11 @@ CELERY_TASK_DEFAULT_ROUTING_KEY = 'default'
 CELERY_QUEUES = (
     Queue('default', Exchange('default'), routing_key='default'),
 )
+
+# 插件 urlpatterns
+PLUGINS_URL_PATTERNS = [
+    {
+        "re_path": "api/",
+        "include": 'center.urls'
+    }
+]
