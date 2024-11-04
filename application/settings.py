@@ -64,8 +64,7 @@ ROOT_URLCONF = 'application.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates']
-        ,
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -267,7 +266,7 @@ REST_FRAMEWORK = {
     # "EXCEPTION_HANDLER": "dvadmin.utils.exception.CustomExceptionHandler",  # 自定义的异常处理
 }
 # ====================================#
-# ****************swagger************#
+# ****************swagger************ #
 # ====================================#
 SWAGGER_SETTINGS = {
     # 基础样式

@@ -38,9 +38,6 @@ class OptionalSlashRouter(SimpleRouter):
             url=r'^{prefix}/{lookup}{trailing_slash}$',
             mapping={
                 'get': 'retrieve',
-                'put': 'update',
-                'patch': 'partial_update',
-                'delete': 'destroy'
             },
             name='{basename}-detail',
             detail=True,
@@ -53,6 +50,27 @@ class OptionalSlashRouter(SimpleRouter):
             name='{basename}-{url_name}',
             detail=True,
             initkwargs={}
+        ),
+        # Update route.
+        Route(
+            url=r'^{prefix}/{lookup}/update{trailing_slash}$',
+            mapping={
+                'post': 'update',
+                'delete': 'destroy'
+            },
+            name='{basename}-update',
+            detail=True,
+            initkwargs={'suffix': 'Instance'}
+        ),
+        # Delete route.
+        Route(
+            url=r'^{prefix}/{lookup}/delete{trailing_slash}$',
+            mapping={
+                'post': 'destroy'
+            },
+            name='{basename}-delete',
+            detail=True,
+            initkwargs={'suffix': 'Instance'}
         ),
     ]
 
