@@ -103,6 +103,7 @@ class CustomModelViewSet(ModelViewSet, QueryArgumentsMixin):
             return serializer_class(*args, **kwargs)
 
     def create(self, request: Request, *args, **kwargs):
+        """新增"""
         if self.check_exclude_methods(request, *args, **kwargs):
             return ErrorResponse(msg="接口未开放", code=404)
         data = request.data.copy()
@@ -118,6 +119,7 @@ class CustomModelViewSet(ModelViewSet, QueryArgumentsMixin):
         return DetailResponse(data=serializer.data, msg="新增成功")
 
     def list(self, request: Request, *args, **kwargs):
+        """列表"""
         if self.check_exclude_methods(request, *args, **kwargs):
             return ErrorResponse(msg="接口未开放", code=404)
         queryset = self.filter_queryset(self.get_queryset())
@@ -129,18 +131,15 @@ class CustomModelViewSet(ModelViewSet, QueryArgumentsMixin):
         return ListResponse(data=serializer.data, msg="获取成功")
 
     def retrieve(self, request: Request, *args, **kwargs):
+        """详细"""
         if self.check_exclude_methods(request, *args, **kwargs):
             return ErrorResponse(msg="接口未开放", code=404)
         instance = self.get_object()
         serializer = self.get_serializer(instance)
         return DetailResponse(data=serializer.data, msg="获取成功")
 
-    # def myself(self, request, *args, **kwargs):
-    #     return ErrorResponse(msg="接口未开放")
-    #
-    # def myself_update(self, request, *args, **kwargs):
-    #     return ErrorResponse(msg="接口未开放")
     def update(self, request: Request, *args, **kwargs):
+        """更新"""
         if self.check_exclude_methods(request, *args, **kwargs):
             return ErrorResponse(msg="接口未开放", code=404)
         partial = kwargs.pop('partial', False)
@@ -156,21 +155,15 @@ class CustomModelViewSet(ModelViewSet, QueryArgumentsMixin):
         return DetailResponse(data=serializer.data, msg="更新成功")
 
     def destroy(self, request: Request, *args, **kwargs):
+        """单个删除"""
         if self.check_exclude_methods(request, *args, **kwargs):
             return ErrorResponse(msg="接口未开放", code=404)
         instance = self.get_object()
         instance.delete()
         return DetailResponse(data=[], msg="删除成功")
 
-    keys = openapi.Schema(description='主键列表', type=openapi.TYPE_ARRAY, items=openapi.TYPE_STRING)
-
-    @swagger_auto_schema(request_body=openapi.Schema(
-        type=openapi.TYPE_OBJECT,
-        required=['keys'],
-        properties={'keys': keys}
-    ), operation_summary='批量删除')
-    @action(methods=['delete'], detail=False)
     def multiple_delete(self, request, *args, **kwargs):
+        """批量删除"""
         request_data = request.data
         keys = request_data.get('keys', None)
         if keys:
