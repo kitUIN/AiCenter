@@ -21,6 +21,8 @@ from application import settings
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 
+from center.views.webhook.view import WebHookViewSet
+
 schema_view = get_schema_view(
     openapi.Info(
         title="DRF TOOLS API",
@@ -45,5 +47,8 @@ urlpatterns = [
                       schema_view.with_ui("redoc", cache_timeout=0),
                       name="schema-redoc",
                   ),
-                  path('api-auth/', include('rest_framework.urls')),  # 添加这行
+                  path('api-auth/', include('rest_framework.urls')),
+
+                  path(r'api/webhook/label-studio/',
+                       WebHookViewSet.as_view({'post': 'label_studio'}, permission_classes=[])),
               ] + [re_path(ele.get('re_path'), include(ele.get('include'))) for ele in settings.PLUGINS_URL_PATTERNS]

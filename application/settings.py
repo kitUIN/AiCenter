@@ -120,7 +120,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Shanghai'
 
 USE_I18N = True
 
@@ -277,7 +277,8 @@ REST_FRAMEWORK = {
         # 'rest_framework.permissions.IsAuthenticatedOrReadOnly', # 有身份 或者 只读访问(self.list,self.retrieve)
     ],
     'DEFAULT_RENDERER_CLASSES': (
-        'rest_framework.renderers.BrowsableAPIRenderer', 'rest_framework.renderers.JSONRenderer',),
+        'rest_framework.renderers.JSONRenderer',
+    ),
     # "EXCEPTION_HANDLER": "dvadmin.utils.exception.CustomExceptionHandler",  # 自定义的异常处理
 }
 # ====================================#
@@ -354,3 +355,6 @@ PLUGINS_URL_PATTERNS = [
         "include": 'center.urls'
     }
 ]
+
+LABEL_STUDIO_URL = locals().get('LABEL_STUDIO_URL', "")
+LABEL_STUDIO_APIKEY = locals().get('LABEL_STUDIO_APIKEY', "")
