@@ -15,5 +15,5 @@ class DataSetCreateSerializer(CustomModelSerializer):
 
     class Meta:
         model = DataSet
-        fields = "__all__"
+        fields = ["id", "name", "description"]
         extra_kwargs = {'id': {'required': False}}

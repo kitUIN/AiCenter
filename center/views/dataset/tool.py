@@ -24,3 +24,8 @@ def label_studio_create_project(name: str, description: str | None = None):
     # create_date_time = datetime.strptime(date_string, "%Y-%m-%dT%H:%M:%S.%fZ")
     # create_date_time = create_date_time.replace(tzinfo=timezone.utc)
     return res["id"]
+
+
+def label_studio_delete_project(_id):
+    ls = LabelStudio(base_url=LABEL_STUDIO_URL, api_key=LABEL_STUDIO_APIKEY)
+    ls.projects.delete(_id)
