@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from label_studio_sdk import ProjectsCreateResponse
 from label_studio_sdk.client import LabelStudio
 
-from application.settings import LABEL_STUDIO_URL, LABEL_STUDIO_APIKEY
+from application.settings import LABEL_STUDIO_URL, LABEL_STUDIO_APIKEY, LOCAL_URL
 
 
 def label_studio_create_project(name: str, description: str | None = None):
@@ -20,6 +20,7 @@ def label_studio_create_project(name: str, description: str | None = None):
         description=description,
     )  # type: ProjectsCreateResponse
     res = project.dict()
+    ls.webhooks.create(url=LOCAL_URL + "/api/webhook/label-studio/", project=res["id"])
     # date_string = res["created_at"]
     # create_date_time = datetime.strptime(date_string, "%Y-%m-%dT%H:%M:%S.%fZ")
     # create_date_time = create_date_time.replace(tzinfo=timezone.utc)

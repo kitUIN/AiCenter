@@ -358,3 +358,4 @@ PLUGINS_URL_PATTERNS = [
 
 LABEL_STUDIO_URL = locals().get('LABEL_STUDIO_URL', "")
 LABEL_STUDIO_APIKEY = locals().get('LABEL_STUDIO_APIKEY', "")
+LOCAL_URL = locals().get('LOCAL_URL', "http://127.0.0.1:4622")

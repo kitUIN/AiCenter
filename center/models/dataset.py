@@ -29,3 +29,4 @@ class DataSet(BaseModel):
         db_table = TABLE_PREFIX + "dataset"
         verbose_name = '数据集'
         verbose_name_plural = verbose_name
+        ordering = ("-create_datetime",)
