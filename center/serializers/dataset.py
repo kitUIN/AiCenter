@@ -11,9 +11,12 @@ class DataSetSerializer(CustomModelSerializer):
 
     def to_representation(self, instance) -> dict:
         rep = super().to_representation(instance)
-        middle_url = f"/user/login/?next=/projects/{instance.id}/data"
+        middle_url = f"/user/login/?next=/projects/{instance.id}/data/"
+        settings_url = f"/user/login/?next=/projects/{instance.id}/settings/"
         rep["middle_url"] = LABEL_STUDIO_URL + "/api/ai/center/node/?url=" + base64.b64encode(
             middle_url.encode()).decode()
+        rep["settings_url"] = LABEL_STUDIO_URL + "/api/ai/center/node/?url=" + base64.b64encode(
+            settings_url.encode()).decode()
         return rep
 
     class Meta:
