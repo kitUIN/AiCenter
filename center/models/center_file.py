@@ -11,8 +11,7 @@ class CenterFile(BaseModel):
     path = models.TextField(help_text="路径", verbose_name="路径", db_comment="路径")
     storage_method = models.IntegerField(default=0, db_default=0, choices=FileStorageMethod, help_text="文件存储模式",
                                          verbose_name="文件存储模式", db_comment="文件存储模式")
+    file = models.FileField(upload_to="files")
 
     class Meta:
-        db_table = TABLE_PREFIX + "center_file"
-        verbose_name = '文件'
-        verbose_name_plural = verbose_name
+        abstract = True

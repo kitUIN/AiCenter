@@ -6,17 +6,6 @@ from center.models.dataset import DataSet
 from utils import BaseModel
 
 
-class TrainConfig(BaseModel):
-    """训练参数"""
-    file = models.ForeignKey(CenterFile, on_delete=models.CASCADE, related_name="configs", help_text="配置文件",
-                             verbose_name="配置文件", db_comment="配置文件")
-
-    class Meta:
-        db_table = TABLE_PREFIX + "train_config"
-        verbose_name = '训练参数'
-        verbose_name_plural = verbose_name
-
-
 class TrainPlan(BaseModel):
     """训练计划"""
     name = models.CharField(max_length=64, unique=True, help_text="名称", verbose_name="名称", db_comment="名称")
@@ -26,6 +15,17 @@ class TrainPlan(BaseModel):
     class Meta:
         db_table = TABLE_PREFIX + "train_plan"
         verbose_name = '训练计划'
+        verbose_name_plural = verbose_name
+
+
+class TrainConfigFile(CenterFile):
+    """训练相关文件"""
+    plan = models.ForeignKey(TrainPlan, on_delete=models.CASCADE, related_name="files", help_text="训练计划",
+                             verbose_name="训练计划", db_comment="训练计划")
+
+    class Meta:
+        db_table = TABLE_PREFIX + "train_config_file"
+        verbose_name = '训练相关文件'
         verbose_name_plural = verbose_name
 
 
