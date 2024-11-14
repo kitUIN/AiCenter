@@ -16,7 +16,7 @@ class CustomModelSerializer(DynamicFieldsMixin, ModelSerializer):
         format="%Y-%m-%d %H:%M:%S", required=False, read_only=True
     )
     update_datetime = serializers.DateTimeField(
-        format="%Y-%m-%d %H:%M:%S", required=False
+        format="%Y-%m-%d %H:%M:%S", required=False, read_only=True, allow_null=True,
     )
 
     def __init__(self, instance=None, data=empty, request=None, **kwargs):
