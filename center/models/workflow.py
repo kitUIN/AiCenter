@@ -18,10 +18,28 @@ class TrainPlan(BaseModel):
         verbose_name_plural = verbose_name
 
 
+def train_directory_path(instance, filename):
+    return f"train/ai_{instance.ai_model.id}/files/{filename}"
+
+
+class TrainFile(CenterFile):
+    """训练相关文件"""
+    ai_model = models.ForeignKey(AIModel, on_delete=models.CASCADE, related_name="files", help_text="关联的模型",
+                                 verbose_name="关联的模型", db_comment="关联的模型")
+
+    file = models.FileField(upload_to=train_directory_path)
+
+    class Meta:
+        db_table = TABLE_PREFIX + "train_file"
+        verbose_name = '训练相关文件'
+        verbose_name_plural = verbose_name
+
+
 class TrainConfigFile(CenterFile):
     """训练相关文件"""
     plan = models.ForeignKey(TrainPlan, on_delete=models.CASCADE, related_name="files", help_text="训练计划",
                              verbose_name="训练计划", db_comment="训练计划")
+    file = models.FileField(upload_to="train/files/")
 
     class Meta:
         db_table = TABLE_PREFIX + "train_config_file"
