@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from application.settings import TABLE_PREFIX
 from center.models.ai import AIModel
@@ -11,6 +12,8 @@ class TrainPlan(BaseModel):
     name = models.CharField(max_length=64, unique=True, help_text="名称", verbose_name="名称", db_comment="名称")
     ai_model = models.ForeignKey(AIModel, on_delete=models.CASCADE, related_name="plans", help_text="关联的模型",
                                  verbose_name="关联的模型", db_comment="关联的模型")
+    startup = models.TextField(help_text="启动语句", verbose_name="启动语句", db_comment="启动语句")
+    args = models.TextField(help_text="启动参数", verbose_name="启动参数", db_comment="启动参数")
 
     class Meta:
         db_table = TABLE_PREFIX + "train_plan"
@@ -18,8 +21,8 @@ class TrainPlan(BaseModel):
         verbose_name_plural = verbose_name
 
 
-def train_directory_path(instance, filename):
-    return f"train/ai_{instance.ai_model.id}/files/{filename}"
+def train_directory_path(instance, filename: str):
+    return f"{settings.MEDIA_URL}train/ai_{instance.ai_model.id}/files/{filename}"
 
 
 class TrainFile(CenterFile):

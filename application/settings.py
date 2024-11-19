@@ -135,8 +135,8 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
 ]
 
-# MEDIA_ROOT = "media"  # 项目下的目录
-# MEDIA_URL = "/media/"  # 跟STATIC_URL类似，指定用户可以通过这个url找到文件
+MEDIA_ROOT = "media"  # 项目下的目录
+MEDIA_URL = "/media/"  # 跟STATIC_URL类似，指定用户可以通过这个url找到文件
 
 # 收集静态文件，必须将 MEDIA_ROOT,STATICFILES_DIRS先注释
 # python manage.py collectstatic
@@ -265,7 +265,7 @@ REST_FRAMEWORK = {
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ),
-    # "DEFAULT_PAGINATION_CLASS": "dvadmin.utils.pagination.CustomPagination",  # 自定义分页
+    "DEFAULT_PAGINATION_CLASS": "utils.pagination.CustomPagination",  # 自定义分页
     "DEFAULT_AUTHENTICATION_CLASSES": (
         # "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",

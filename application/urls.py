@@ -14,6 +14,7 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include, re_path
 
@@ -52,3 +53,4 @@ urlpatterns = [
                   path(r'api/webhook/label-studio/',
                        WebHookViewSet.as_view({'post': 'label_studio'}, permission_classes=[])),
               ] + [re_path(ele.get('re_path'), include(ele.get('include'))) for ele in settings.PLUGINS_URL_PATTERNS]
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
