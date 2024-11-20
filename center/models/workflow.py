@@ -22,7 +22,7 @@ class TrainPlan(BaseModel):
 
 
 def train_directory_path(instance, filename: str):
-    return f"{settings.MEDIA_URL}train/ai_{instance.ai_model.id}/files/{filename}"
+    return f"{settings.MEDIA_ROOT}/train/ai_{instance.ai_model.id}/files/{filename}"
 
 
 class TrainFile(CenterFile):
