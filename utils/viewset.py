@@ -31,6 +31,7 @@ class CustomModelViewSet(ModelViewSet, QueryArgumentsMixin):
     create_serializer_class = None
     retrieve_serializer_class = None
     update_serializer_class = None
+    simple_serializer_class = None
     filter_fields = '__all__'
     search_fields = ()
     exclude_methods: List[ViewSetRequestMethod] = []
@@ -129,6 +130,13 @@ class CustomModelViewSet(ModelViewSet, QueryArgumentsMixin):
             return self.get_paginated_response(serializer.data)
         serializer = self.get_serializer(queryset, many=True, request=request)
         return ListResponse(data=serializer.data, msg="获取成功")
+
+    def simple(self, request: Request, *args, **kwargs):
+        if self.check_exclude_methods(request, *args, **kwargs):
+            return ErrorResponse(msg="接口未开放", code=404)
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True, request=request)
+        return DetailResponse(data=serializer.data, msg="获取成功")
 
     def retrieve(self, request: Request, *args, **kwargs):
         """详细"""

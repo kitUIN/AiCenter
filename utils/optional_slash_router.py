@@ -14,6 +14,15 @@ class OptionalSlashRouter(SimpleRouter):
             detail=False,
             initkwargs={'suffix': 'List'}
         ),
+        Route(
+            url=r'^{prefix}/simple{trailing_slash}$',
+            mapping={
+                'get': 'simple',
+            },
+            name='{basename}-simple',
+            detail=False,
+            initkwargs={'suffix': 'Simple'}
+        ),
         # List route.
         # Route(
         #     url=r'^{prefix}/self{trailing_slash}$',

@@ -17,6 +17,12 @@ class TrainFileSerializer(CustomModelSerializer):
         fields = "__all__"
 
 
+class TrainFileSimpleSerializer(CustomModelSerializer):
+    class Meta:
+        model = TrainFile
+        fields = "__all__"
+
+
 class TrainPlanSerializer(CustomModelSerializer):
     class Meta:
         model = TrainPlan

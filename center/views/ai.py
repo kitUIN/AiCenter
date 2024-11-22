@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from center.models import AIModel
 from center.models.workflow import TrainFile, TrainPlan
 from center.serializers import AIModelSerializer, TrainFileSerializer
-from center.serializers.ai import TrainPlanSerializer
+from center.serializers.ai import TrainPlanSerializer, TrainFileSimpleSerializer
 from utils import ListResponse, DetailResponse, ErrorResponse
 from utils.viewset import CustomModelViewSet
 
@@ -15,15 +15,23 @@ class AIModelViewSet(CustomModelViewSet):
     queryset = AIModel.objects.all()
     serializer_class = AIModelSerializer
 
-    @action(methods=["GET"], detail=True)
+    @action(methods=["GET", "POST"], detail=True)
     def plan(self, request, *args, **kwargs):
         instance = self.get_object()  # type: AIModel
-        queryset = instance.plans.all()
-        if queryset is not None:
-            serializer = TrainPlanSerializer(self.paginate_queryset(queryset), many=True, request=request)
-            return self.get_paginated_response(serializer.data)
-        serializer = TrainPlanSerializer(queryset, many=True, request=request)
-        return ListResponse(data=serializer.data, msg="获取成功")
+        if request.method == "GET":
+            queryset = instance.plans.all()
+            if queryset is not None:
+                serializer = TrainPlanSerializer(self.paginate_queryset(queryset), many=True, request=request)
+                return self.get_paginated_response(serializer.data)
+            serializer = TrainPlanSerializer(queryset, many=True, request=request)
+            return ListResponse(data=serializer.data, msg="获取成功")
+        else:
+            data = request.data.copy()
+            data["ai_model"] = instance.id
+            serializer = TrainPlanSerializer(data=data, request=request)
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            return DetailResponse(data=serializer.data, msg="新增成功")
 
     @action(methods=["POST"], detail=True, url_path="plan/(?P<plan_id>[^/.]+)/delete")
     def plan_delete(self, request, plan_id, *args, **kwargs):
@@ -43,6 +51,13 @@ class AIModelViewSet(CustomModelViewSet):
             return self.get_paginated_response(serializer.data)
         serializer = TrainFileSerializer(queryset, many=True, request=request)
         return ListResponse(data=serializer.data, msg="获取成功")
+
+    @action(methods=["GET"], detail=True, url_path="file/simple")
+    def file_simple(self, request, *args, **kwargs):
+        instance = self.get_object()  # type: AIModel
+        queryset = instance.files.all()
+        serializer = TrainFileSimpleSerializer(queryset, many=True, request=request)
+        return DetailResponse(data=serializer.data, msg="获取成功")
 
     @action(methods=["POST"], detail=True, url_path="file/(?P<file_id>[^/.]+)/delete")
     def file_delete(self, request, file_id, *args, **kwargs):
