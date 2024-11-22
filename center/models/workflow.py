@@ -4,7 +4,9 @@ from application.settings import TABLE_PREFIX
 from center.models.ai import AIModel
 from center.models.center_file import CenterFile
 from center.models.dataset import DataSet
+from enums import TrainTaskStatus
 from utils import BaseModel
+from utils.IntegerEnumField import IntegerEnumField
 
 
 class TrainPlan(BaseModel):
@@ -52,12 +54,14 @@ class TrainConfigFile(CenterFile):
 
 class TrainTask(BaseModel):
     """训练任务"""
+    ai_model = models.ForeignKey(AIModel, on_delete=models.CASCADE, related_name="tasks", help_text="关联的模型",
+                                 verbose_name="关联的模型", db_comment="关联的模型")
     plan = models.ForeignKey(TrainPlan, on_delete=models.CASCADE, related_name="tasks", help_text="使用的计划",
                              verbose_name="使用的计划", db_comment="使用的计划")
-    dataset = models.ForeignKey(DataSet, on_delete=models.CASCADE, related_name="tasks", help_text="使用的数据集",
-                                verbose_name="使用的数据集", db_comment="使用的数据集")
-    status = models.BooleanField(default=False, db_default=False, help_text="是否完成",
-                                 verbose_name="是否完成", db_comment="是否完成")
+    #    dataset = models.ForeignKey(DataSet, on_delete=models.CASCADE, related_name="tasks", help_text="使用的数据集",
+    #                                verbose_name="使用的数据集", db_comment="使用的数据集")
+    status = IntegerEnumField(enum=TrainTaskStatus, default=TrainTaskStatus.Waiting, db_default=TrainTaskStatus.Waiting,
+                              help_text="任务状态", verbose_name="任务状态", db_comment="任务状态")
     finished_datetime = models.DateTimeField(null=True, blank=True, help_text="完成时间", verbose_name="完成时间",
                                              db_comment="完成时间")
 
