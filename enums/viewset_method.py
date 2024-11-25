@@ -13,3 +13,5 @@ class ViewSetRequestMethod(ChoiceEnum):
     """更新"""
     Destroy = "destroy"
     """删除"""
+    Simple = "simple"
+    """简单"""
