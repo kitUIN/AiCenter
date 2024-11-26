@@ -7,6 +7,7 @@ from center.models import AIModel
 from center.models.workflow import TrainFile, TrainPlan
 from center.serializers import AIModelSerializer, TrainFileSerializer
 from center.serializers.ai import TrainPlanSerializer, TrainFileSimpleSerializer
+from plugin.plugin_tool import get_plugin_templates
 from utils import ListResponse, DetailResponse, ErrorResponse
 from utils.viewset import CustomModelViewSet
 
@@ -83,3 +84,15 @@ class AIModelViewSet(CustomModelViewSet):
             serializer.save()
             file_data.append(serializer.data)
         return DetailResponse(data=file_data, msg="上传成功")
+
+    @action(methods=["GET"], detail=False, url_path="key")
+    def key_simple(self, request, *args, **kwargs):
+        keys = [
+            {
+                "key": k,
+                "icon": v._icon,
+                "info": v._info
+            }
+            for k, v in get_plugin_templates().items()
+        ]
+        return DetailResponse(data=keys, msg="获取成功")
