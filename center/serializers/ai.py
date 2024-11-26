@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from center.models import AIModel
+from center.models.ai import AITag
 from center.models.workflow import TrainFile, TrainPlan
 from utils.serializers import CustomModelSerializer
 

@@ -1,9 +1,11 @@
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.request import Request
 from rest_framework.response import Response
 
 from center.models import AIModel
+from center.models.ai import AITag
 from center.models.workflow import TrainFile, TrainPlan
 from center.serializers import AIModelSerializer, TrainFileSerializer
 from center.serializers.ai import TrainPlanSerializer, TrainFileSimpleSerializer
@@ -15,6 +17,20 @@ from utils.viewset import CustomModelViewSet
 class AIModelViewSet(CustomModelViewSet):
     queryset = AIModel.objects.all()
     serializer_class = AIModelSerializer
+
+    def create(self, request: Request, *args, **kwargs):
+        """新增"""
+        data = request.data.copy()
+        tags_data = data.get("tags", [])
+        if tags_data:
+            existing_tags = set(AITag.objects.filter(id__in=tags_data).values_list('id', flat=True))
+            new_tags = [AITag(id=tag_id) for tag_id in tags_data if tag_id not in existing_tags]
+            if new_tags:
+                AITag.objects.bulk_create(new_tags)
+        serializer = self.get_serializer(data=data, request=request)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return DetailResponse(data=serializer.data, msg="新增成功")
 
     @action(methods=["GET", "POST"], detail=True)
     def plan(self, request, *args, **kwargs):
@@ -96,3 +112,14 @@ class AIModelViewSet(CustomModelViewSet):
             for k, v in get_plugin_templates().items()
         ]
         return DetailResponse(data=keys, msg="获取成功")
+
+    @action(methods=["GET"], detail=True, url_path="cmd")
+    def cmd_template(self, request, *args, **kwargs):
+        instance = self.get_object()  # type: AIModel
+        templates = get_plugin_templates()
+        if instance.key not in templates.keys():
+            return ErrorResponse(msg="找不到对应的命令模板")
+        template_class = templates[instance.key]
+        template = template_class()
+        data = template.get_plan()
+        return DetailResponse(data=data, msg="获取成功")

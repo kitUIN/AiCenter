@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Type
+from typing import Any, Type, Literal
 
 _plugin_templates = {}
 
@@ -11,9 +11,11 @@ def plugin_template(cls):
 
 @dataclass
 class ArgData:
+    id: int
+    """id"""
     name: str
     """参数名称"""
-    type: int = 1
+    type: Literal["string", "file"] = "string"
     """参数类型"""
     value: str = ""
     """参数值"""
@@ -32,10 +34,10 @@ class StartupData:
 
 
 class BasePlugin:
-    _key = "base"
-    _info = "基础类型"
+    _key: str = "base"
+    _info: str = "默认说明"
     """说明"""
-    _icon = "pp"
+    _icon: str | None = None
     """图标"""
 
     def __init__(self):
@@ -49,12 +51,12 @@ class BasePlugin:
         """返回参数"""
         return []
 
-    def get_plan(self, *args, **kwargs):
+    def get_plan(self, *args, **kwargs) -> dict:
         startup = self.get_startup(*args, **kwargs)
-        args = self.get_args(*args, **kwargs)
+        _args = self.get_args(*args, **kwargs)
         return {
             "startup": startup.__dict__,
-            "args": args.__dict__
+            "args": [i.__dict__ for i in _args]
         }
 
     @property

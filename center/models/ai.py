@@ -5,7 +5,7 @@ from utils import BaseModel
 
 
 class AITag(BaseModel):
-    name = models.CharField(max_length=64, unique=True, help_text="名称", verbose_name="名称", db_comment="名称")
+    id = models.CharField(max_length=16, primary_key=True, help_text="名称", verbose_name="名称", db_comment="名称")
 
     class Meta:
         db_table = TABLE_PREFIX + "ai_tag"
