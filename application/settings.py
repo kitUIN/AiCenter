@@ -346,6 +346,7 @@ CELERY_TASK_DEFAULT_QUEUE = 'default'
 CELERY_TASK_DEFAULT_ROUTING_KEY = 'default'
 CELERY_QUEUES = (
     Queue('default', Exchange('default'), routing_key='default'),
+    Queue('train_task', Exchange('train_task'), routing_key='train_task'),
 )
 
 # 插件 urlpatterns
