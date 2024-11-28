@@ -11,3 +11,4 @@ class TrainTaskStatus(Enum):
     """已取消"""
     Succeed = 3
     """成功"""
+

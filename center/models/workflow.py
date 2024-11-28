@@ -16,6 +16,8 @@ class TrainPlan(BaseModel):
                                  verbose_name="关联的模型", db_comment="关联的模型")
     startup = models.TextField(help_text="启动语句", verbose_name="启动语句", db_comment="启动语句")
     args = models.TextField(help_text="启动参数", verbose_name="启动参数", db_comment="启动参数")
+    requirements = models.ForeignKey("TrainFile", null=True, on_delete=models.CASCADE, related_name="plans",
+                                     help_text="环境文件", verbose_name="环境文件", db_comment="环境文件")
 
     class Meta:
         db_table = TABLE_PREFIX + "train_plan"
@@ -68,4 +70,22 @@ class TrainTask(BaseModel):
     class Meta:
         db_table = TABLE_PREFIX + "train_task"
         verbose_name = '训练任务'
+        verbose_name_plural = verbose_name
+
+
+class TrainTaskLog(BaseModel):
+    task = models.OneToOneField("TrainTask", on_delete=models.CASCADE,related_name="log")
+    venv = IntegerEnumField(enum=TrainTaskStatus, default=TrainTaskStatus.Waiting, db_default=TrainTaskStatus.Waiting,
+                            help_text="虚拟环境创建", verbose_name="虚拟环境创建",
+                            db_comment="虚拟环境创建")
+    requirements = IntegerEnumField(enum=TrainTaskStatus, default=TrainTaskStatus.Waiting,
+                                    db_default=TrainTaskStatus.Waiting, help_text="依赖安装", verbose_name="依赖安装",
+                                    db_comment="依赖安装")
+    main = IntegerEnumField(enum=TrainTaskStatus, default=TrainTaskStatus.Waiting, db_default=TrainTaskStatus.Waiting,
+                            help_text="训练程序运行", verbose_name="训练程序运行",
+                            db_comment="训练程序运行")
+
+    class Meta:
+        db_table = TABLE_PREFIX + "train_task_log"
+        verbose_name = '训练任务日志'
         verbose_name_plural = verbose_name
