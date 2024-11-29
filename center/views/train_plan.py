@@ -5,6 +5,7 @@ from center.serializers import TrainPlanSerializer, TrainTaskSerializer
 from enums.viewset_method import ViewSetRequestMethod
 from utils import DetailResponse
 from utils.viewset import CustomModelViewSet
+from center.tasks import start_train
 
 
 class TrainPlanViewSet(CustomModelViewSet):
@@ -20,5 +21,6 @@ class TrainPlanViewSet(CustomModelViewSet):
             "plan": instance.id
         }, request=request)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        task = serializer.save()
+        start_train.apply_async(args=[task.id])
         return DetailResponse(msg="启动成功")
