@@ -81,12 +81,28 @@ class TrainTaskLog(BaseModel):
     venv = IntegerEnumField(enum=TrainTaskStatus, default=TrainTaskStatus.Waiting, db_default=TrainTaskStatus.Waiting,
                             help_text="虚拟环境创建", verbose_name="虚拟环境创建",
                             db_comment="虚拟环境创建")
+    venv_start_datetime = models.DateTimeField(null=True, help_text="虚拟环境创建开始时间",
+                                               verbose_name="虚拟环境创建开始时间", db_comment="虚拟环境创建开始时间")
+    venv_end_datetime = models.DateTimeField(null=True, help_text="虚拟环境创建结束时间",
+                                             verbose_name="虚拟环境创建结束时间", db_comment="虚拟环境创建结束时间")
     requirements = IntegerEnumField(enum=TrainTaskStatus, default=TrainTaskStatus.Waiting,
                                     db_default=TrainTaskStatus.Waiting, help_text="依赖安装", verbose_name="依赖安装",
                                     db_comment="依赖安装")
-    main = IntegerEnumField(enum=TrainTaskStatus, default=TrainTaskStatus.Waiting, db_default=TrainTaskStatus.Waiting,
-                            help_text="训练程序运行", verbose_name="训练程序运行",
-                            db_comment="训练程序运行")
+    requirements_start_datetime = models.DateTimeField(null=True, help_text="依赖安装开始时间",
+                                                       verbose_name="依赖安装开始时间",
+                                                       db_comment="依赖安装开始时间")
+    requirements_end_datetime = models.DateTimeField(null=True, help_text="依赖安装结束时间",
+                                                     verbose_name="依赖安装结束时间",
+                                                     db_comment="依赖安装结束时间")
+    train = IntegerEnumField(enum=TrainTaskStatus, default=TrainTaskStatus.Waiting, db_default=TrainTaskStatus.Waiting,
+                             help_text="训练程序运行", verbose_name="训练程序运行",
+                             db_comment="训练程序运行")
+    train_start_datetime = models.DateTimeField(null=True, help_text="训练程序运行开始时间",
+                                                verbose_name="训练程序运行开始时间",
+                                                db_comment="训练程序运行开始时间")
+    train_end_datetime = models.DateTimeField(null=True, help_text="训练程序运行结束时间",
+                                              verbose_name="训练程序运行结束时间",
+                                              db_comment="训练程序运行结束时间")
 
     class Meta:
         db_table = TABLE_PREFIX + "train_task_log"
