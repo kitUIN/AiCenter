@@ -34,7 +34,8 @@ def train_directory_path(instance, filename: str):
 
 class TrainFile(CenterFile):
     """训练相关文件"""
-    ai_model = models.ForeignKey(AIModel, on_delete=models.CASCADE, related_name="files", help_text="关联的模型",
+    ai_model = models.ForeignKey(AIModel, null=True, on_delete=models.CASCADE, related_name="files",
+                                 help_text="关联的模型",
                                  verbose_name="关联的模型", db_comment="关联的模型")
 
     file = models.FileField(upload_to=train_directory_path)
@@ -73,6 +74,25 @@ class TrainTask(BaseModel):
     class Meta:
         db_table = TABLE_PREFIX + "train_task"
         verbose_name = '训练任务'
+        verbose_name_plural = verbose_name
+        ordering = ("-create_datetime",)
+
+
+class TrainTaskStep(BaseModel):
+    name = models.CharField(max_length=64, help_text="步骤名称", verbose_name="步骤名称", db_comment="步骤名称")
+
+    task = models.ForeignKey("TrainTask", on_delete=models.CASCADE, related_name="steps")
+    start_datetime = models.DateTimeField(null=True, help_text="任务步骤创建开始时间",
+                                          verbose_name="任务步骤创建开始时间", db_comment="任务步骤创建开始时间")
+    end_datetime = models.DateTimeField(null=True, help_text="任务步骤创建结束时间",
+                                        verbose_name="任务步骤创建结束时间", db_comment="任务步骤创建结束时间")
+    status = IntegerEnumField(enum=TrainTaskStatus, default=TrainTaskStatus.Waiting, db_default=TrainTaskStatus.Waiting,
+                              help_text="任务步骤进行状态", verbose_name="任务步骤进行状态",
+                              db_comment="任务步骤进行状态")
+
+    class Meta:
+        db_table = TABLE_PREFIX + "train_task_step"
+        verbose_name = '训练任务日志'
         verbose_name_plural = verbose_name
 
 

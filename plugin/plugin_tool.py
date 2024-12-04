@@ -33,6 +33,16 @@ class StartupData:
     """是否允许修改"""
 
 
+@dataclass
+class TaskStepData:
+    name: str
+    """名称"""
+    cmd: str
+    """执行命令"""
+    step_type: Literal["normal", "venv"]
+    """类型"""
+
+
 class BasePlugin:
     _key: str = "base"
     _info: str = "默认说明"
@@ -49,6 +59,10 @@ class BasePlugin:
 
     def get_args(self, *args, **kwargs) -> list[ArgData]:
         """返回参数"""
+        return []
+
+    def get_task_steps(self, *args, **kwargs) -> list[TaskStepData]:
+        """返回训练步骤"""
         return []
 
     def get_plan(self, *args, **kwargs) -> dict:
@@ -81,5 +95,6 @@ __all__ = [
     "plugin_template",
     "ArgData",
     "StartupData",
+    "TaskStepData",
     "BasePlugin"
 ]

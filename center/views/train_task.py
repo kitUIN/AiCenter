@@ -23,7 +23,7 @@ class TrainTaskViewSet(CustomModelViewSet):
     @action(methods=["GET"], detail=True, url_path="log")
     def log(self, request, *args, **kwargs):
         instance = self.get_object()  # type: TrainTask
-        serializer = TrainTaskLogSerializer(instance.log, request=request)
+        serializer = TrainTaskLogSerializer(instance, request=request)
         return DetailResponse(msg="获取成功", data=serializer.data)
 
     @action(methods=["GET"], detail=True, url_path="log/detail")
@@ -31,17 +31,18 @@ class TrainTaskViewSet(CustomModelViewSet):
         task = self.get_object()  # type: TrainTask
         line = request.query_params.get("pos")
         log_type = request.query_params.get("log_type", "")
-        env_name = f"train_task/{task.plan.name}_{task.id}"
+        log_name = f"train_task/{task.plan.name}_{task.id}/logs/{log_type}.out"
         current_pos = None
         lines = []
-        if log_type == "requirements":
-            file_name = Path(f"{env_name}/requirements.out")
+        if log_type != "venv":
+            file_name = Path(log_name)
             with file_name.open("r", encoding="utf8") as f:
                 if line and line != "0":
                     f.seek(int(line))
                 lines = f.readlines()
                 current_pos = f.tell()
         return DetailResponse(msg="获取成功", data={
+            "log_type": log_type,
             "pos": current_pos,
             "lines": [i.rstrip("\n") for i in lines]
         })
