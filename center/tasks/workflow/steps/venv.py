@@ -20,4 +20,5 @@ class NormalVenvWorkflowStep(BaseWorkflowStep):
         ) if os.name != "nt" else env_name.joinpath("venv",
                                                     "Scripts",
                                                     "activate.bat")
-        return super()._run(env_name, f"{venv_activate} && {cmd}", task_id, task_step_id, **kwargs)
+        # return super()._run(env_name, f"{venv_activate} && cd {env_name} && {cmd}", task_id, task_step_id, **kwargs)
+        return super()._run(env_name, f"cd {env_name} && {cmd}", task_id, task_step_id, **kwargs)

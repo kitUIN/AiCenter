@@ -39,11 +39,8 @@ class BaseWorkflowStep:
             status=TrainTaskStatus.Running, start_datetime=get_now()
         )
         logs = env_name.joinpath("logs")
-
-        if not env_name.exists():
-            env_name.mkdir()
         if not logs.exists():
-            logs.mkdir()
+            logs.mkdir(parents=True, exist_ok=True)
         process = subprocess.Popen(cmd, shell=True,
                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1, )
         c = 0
@@ -61,9 +58,19 @@ class BaseWorkflowStep:
                         if self._check_cancel(task_id, task_step_id):
                             process.kill()
                             return False
+            stderr_output = process.stderr.read()
+            if stderr_output:
+                f.write(f"{datetime.now()} | 错误输出:\n{stderr_output}\n")
+
             process.stdout.close()
+            process.stderr.close()
             exit_code = process.wait()
             f.write(f"{datetime.now()} | 任务结束,退出代码:{exit_code}\n")
+            if exit_code != 0:
+                TrainTaskStep.objects.filter(id=task_step_id).update(
+                    status=TrainTaskStatus.Failed, end_datetime=get_now()
+                )
+                return False
         TrainTaskStep.objects.filter(id=task_step_id).update(
             status=TrainTaskStatus.Succeed, end_datetime=get_now()
         )

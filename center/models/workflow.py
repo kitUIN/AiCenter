@@ -10,6 +10,8 @@ from center.models.dataset import DataSet
 from enums import TrainTaskStatus
 from utils import BaseModel
 from utils.IntegerEnumField import IntegerEnumField
+import json
+from pathlib import Path
 
 
 class TrainPlan(BaseModel):
@@ -21,6 +23,14 @@ class TrainPlan(BaseModel):
     args = models.TextField(help_text="启动参数", verbose_name="启动参数", db_comment="启动参数")
     requirements = models.ForeignKey("TrainFile", null=True, on_delete=models.CASCADE, related_name="plans",
                                      help_text="环境文件", verbose_name="环境文件", db_comment="环境文件")
+
+    def get_startup_cmd(self, result_folder: str):
+        path = Path(result_folder)
+        if not path.exists():
+            path.mkdir(parents=True, exist_ok=True)
+        args = {i["name"]: i["value"] for i in json.loads(self.args)}
+        args["result_folder"] = result_folder
+        return self.startup.format(**args)
 
     class Meta:
         db_table = TABLE_PREFIX + "train_plan"
