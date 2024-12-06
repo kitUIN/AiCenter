@@ -106,43 +106,22 @@ class TrainTaskStep(BaseModel):
         verbose_name_plural = verbose_name
 
 
-class TrainTaskLog(BaseModel):
-    task = models.OneToOneField("TrainTask", on_delete=models.CASCADE, related_name="log")
-    venv = IntegerEnumField(enum=TrainTaskStatus, default=TrainTaskStatus.Waiting, db_default=TrainTaskStatus.Waiting,
-                            help_text="虚拟环境创建", verbose_name="虚拟环境创建",
-                            db_comment="虚拟环境创建")
-    venv_start_datetime = models.DateTimeField(null=True, help_text="虚拟环境创建开始时间",
-                                               verbose_name="虚拟环境创建开始时间", db_comment="虚拟环境创建开始时间")
-    venv_end_datetime = models.DateTimeField(null=True, help_text="虚拟环境创建结束时间",
-                                             verbose_name="虚拟环境创建结束时间", db_comment="虚拟环境创建结束时间")
-    requirements = IntegerEnumField(enum=TrainTaskStatus, default=TrainTaskStatus.Waiting,
-                                    db_default=TrainTaskStatus.Waiting, help_text="依赖安装", verbose_name="依赖安装",
-                                    db_comment="依赖安装")
-    requirements_start_datetime = models.DateTimeField(null=True, help_text="依赖安装开始时间",
-                                                       verbose_name="依赖安装开始时间",
-                                                       db_comment="依赖安装开始时间")
-    requirements_end_datetime = models.DateTimeField(null=True, help_text="依赖安装结束时间",
-                                                     verbose_name="依赖安装结束时间",
-                                                     db_comment="依赖安装结束时间")
-    train = IntegerEnumField(enum=TrainTaskStatus, default=TrainTaskStatus.Waiting, db_default=TrainTaskStatus.Waiting,
-                             help_text="训练程序运行", verbose_name="训练程序运行",
-                             db_comment="训练程序运行")
-    train_start_datetime = models.DateTimeField(null=True, help_text="训练程序运行开始时间",
-                                                verbose_name="训练程序运行开始时间",
-                                                db_comment="训练程序运行开始时间")
-    train_end_datetime = models.DateTimeField(null=True, help_text="训练程序运行结束时间",
-                                              verbose_name="训练程序运行结束时间",
-                                              db_comment="训练程序运行结束时间")
+class AiModelPower(BaseModel):
+    name = models.CharField(max_length=64, help_text="名称", verbose_name="名称", db_comment="名称")
+    task = models.ForeignKey("TrainTask", on_delete=models.CASCADE, related_name="powers")
 
     class Meta:
-        db_table = TABLE_PREFIX + "train_task_log"
-        verbose_name = '训练任务日志'
+        db_table = TABLE_PREFIX + "ai_power"
+        verbose_name = 'AI能力'
         verbose_name_plural = verbose_name
 
 
-@receiver(post_save, sender=TrainTask)
-def save_in_redis(instance: TrainTask, created: bool, raw: bool, signal: ModelSignal, **kwargs):
-    # print(kwargs)
-    # print(instance)
-    if created:
-        TrainTaskLog.objects.create(task=instance)
+class AiModelPowerApiKey(BaseModel):
+    id = models.CharField(max_length=128, primary_key=True, help_text="密钥", verbose_name="密钥", db_comment="密钥")
+    power = models.ForeignKey("AiModelPower", on_delete=models.CASCADE, related_name="keys")
+    status = models.BooleanField(default=True, db_default=True, )
+    key = models.CharField(max_length=32, help_text="key", verbose_name="key", db_comment="key")
+    class Meta:
+        db_table = TABLE_PREFIX + "ai_power_key"
+        verbose_name = 'AI能力'
+        verbose_name_plural = verbose_name

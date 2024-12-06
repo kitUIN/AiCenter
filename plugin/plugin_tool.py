@@ -1,5 +1,8 @@
 from dataclasses import dataclass
 from typing import Any, Type, Literal
+from rest_framework.response import Response
+
+from utils import ErrorResponse
 
 _plugin_templates = {}
 
@@ -72,6 +75,19 @@ class BasePlugin:
             "startup": startup.__dict__,
             "args": [i.__dict__ for i in _args]
         }
+
+    def predict(self, text: str, image) -> Response:
+        if text:
+            return self._predict_text(text)
+        elif image:
+            return self._predict_image(text)
+        return ErrorResponse(msg="未开放")
+
+    def _predict_text(self, text: str) -> Response:
+        return ErrorResponse(msg="不支持文字预测")
+
+    def _predict_image(self, image) -> Response:
+        return ErrorResponse(msg="不支持图片预测")
 
     @property
     def key(self):

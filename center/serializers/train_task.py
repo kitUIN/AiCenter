@@ -1,13 +1,10 @@
-from datetime import datetime
-
 from rest_framework import serializers
 
 from center.models import TrainTask
-from center.models.workflow import TrainTaskLog, TrainTaskStep
+from center.models.workflow import TrainTaskStep
 from center.tasks.workflow import get_now
 from enums import TrainTaskStatus
 from utils.serializers import CustomModelSerializer
-import pytz
 
 
 class TrainTaskSerializer(CustomModelSerializer):
@@ -20,16 +17,9 @@ class TrainTaskSerializer(CustomModelSerializer):
         if instance.status == TrainTaskStatus.Canceled:
             rep["running_status"] = "已取消"
         elif instance.status == TrainTaskStatus.Running:
-            if instance.log.venv == TrainTaskStatus.Running:
-                rep["running_status"] = "创建虚拟环境中"
-            elif instance.log.requirements == TrainTaskStatus.Running:
-                rep["running_status"] = "安装依赖"
-            elif instance.log.train == TrainTaskStatus.Running:
-                rep["running_status"] = "训练中"
-            else:
-                rep["running_status"] = "运行中"
+            rep["running_status"] = "运行中"
         elif instance.status == TrainTaskStatus.Succeed:
-            rep["running_status"] = "训练完成"
+            rep["running_status"] = "已完成"
         elif instance.status == TrainTaskStatus.Fail:
             rep["running_status"] = "失败"
         else:

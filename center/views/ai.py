@@ -7,7 +7,7 @@ from rest_framework.response import Response
 
 from center.models import AIModel
 from center.models.ai import AITag
-from center.models.workflow import TrainFile, TrainPlan
+from center.models.workflow import TrainFile, TrainPlan, AiModelPowerApiKey
 from center.serializers import AIModelSerializer, TrainFileSerializer
 from center.serializers.ai import TrainPlanSerializer, TrainFileSimpleSerializer
 from plugin.plugin_tool import get_plugin_templates
@@ -124,3 +124,16 @@ class AIModelViewSet(CustomModelViewSet):
         template = template_class()
         data = template.get_plan()
         return DetailResponse(data=data, msg="获取成功")
+
+    def predict(self, request, *args, **kwargs):
+        auth_header = request.META.get('HTTP_AUTHORIZATION')
+        if not auth_header:
+            return ErrorResponse(msg="缺少身份认证", code=401, status=401)
+        token = auth_header[7:] if auth_header.startswith('Bearer ') else None
+        key = AiModelPowerApiKey.objects.filter(token=token).first()
+        if not key or (key and not key.status):
+            return ErrorResponse(msg="无效的身份认证", code=401, status=401)
+        templates = get_plugin_templates()
+        if key.key not in templates.keys():
+            return ErrorResponse(msg="找不到对应的模型")
+        return templates[key.key]().predict(None, None)
