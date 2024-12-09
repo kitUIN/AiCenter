@@ -54,7 +54,11 @@ def start_train(task_id: int):
         return "无对应的插件配置文件"
     venv_name = f"train_task/{task.plan.name}_{task.id}"
     manager = TrainTaskManager(venv_name, task.id)
+    cwd = Path.cwd()
+    result_folder = cwd.joinpath("result", f"{task.id}")
+    if not result_folder.exists():
+        result_folder.mkdir(parents=True, exist_ok=True)
     return manager.run_steps(templates[key]().get_task_steps(
         requirements=task.plan.requirements.file.path if task.plan.requirements else None,
-        startup_cmd=task.plan.get_startup_cmd(f"result/{task.id}")
+        startup_cmd=task.plan.get_startup_cmd(result_folder)
     ))

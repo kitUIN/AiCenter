@@ -22,6 +22,7 @@ from application import settings
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 
+from center.views import AIModelViewSet
 from center.views.webhook.view import WebHookViewSet
 
 schema_view = get_schema_view(
@@ -52,5 +53,7 @@ urlpatterns = [
 
                   path(r'api/webhook/label-studio/',
                        WebHookViewSet.as_view({'post': 'label_studio'}, permission_classes=[])),
+
+                  path('api/v1/predict/',  AIModelViewSet.as_view({'post': 'predict'}, permission_classes=[])),
               ] + [re_path(ele.get('re_path'), include(ele.get('include'))) for ele in settings.PLUGINS_URL_PATTERNS]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

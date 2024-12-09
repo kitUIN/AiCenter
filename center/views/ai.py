@@ -10,7 +10,7 @@ from center.models.ai import AITag
 from center.models.workflow import TrainFile, TrainPlan, AiModelPowerApiKey
 from center.serializers import AIModelSerializer, TrainFileSerializer
 from center.serializers.ai import TrainPlanSerializer, TrainFileSimpleSerializer
-from plugin.plugin_tool import get_plugin_templates
+from plugin.plugin_tool import get_plugin_templates, PredictFile
 from utils import ListResponse, DetailResponse, ErrorResponse
 from utils.viewset import CustomModelViewSet
 
@@ -126,14 +126,19 @@ class AIModelViewSet(CustomModelViewSet):
         return DetailResponse(data=data, msg="获取成功")
 
     def predict(self, request, *args, **kwargs):
-        auth_header = request.META.get('HTTP_AUTHORIZATION')
-        if not auth_header:
-            return ErrorResponse(msg="缺少身份认证", code=401, status=401)
-        token = auth_header[7:] if auth_header.startswith('Bearer ') else None
-        key = AiModelPowerApiKey.objects.filter(token=token).first()
-        if not key or (key and not key.status):
-            return ErrorResponse(msg="无效的身份认证", code=401, status=401)
+        # auth_header = request.META.get('HTTP_AUTHORIZATION')
+        # if not auth_header:
+        #     return ErrorResponse(msg="缺少身份认证", code=401, status=401)
+        # token = auth_header[7:] if auth_header.startswith('Bearer ') else None
+        # key = AiModelPowerApiKey.objects.filter(token=token).first()
+        # if not key or (key and not key.status):
+        #     return ErrorResponse(msg="无效的身份认证", code=401, status=401)
+        key = "PULC"
         templates = get_plugin_templates()
-        if key.key not in templates.keys():
-            return ErrorResponse(msg="找不到对应的模型")
-        return templates[key.key]().predict(None, None)
+        # if key.key not in templates.keys():
+        #     return ErrorResponse(msg="找不到对应的模型")
+        p_file = []
+        files = request.FILES.getlist('files')  # type: list[InMemoryUploadedFile]
+        for file in files:
+            p_file.append(PredictFile(name=file.name, content=file.open("rb").read()))
+        return templates[key]().predict(None, p_file)

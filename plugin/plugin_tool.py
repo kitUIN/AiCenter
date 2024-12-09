@@ -46,6 +46,14 @@ class TaskStepData:
     """类型"""
 
 
+@dataclass
+class PredictFile:
+    name: str
+    """名称"""
+    content: bytes
+    """内容"""
+
+
 class BasePlugin:
     _key: str = "base"
     _info: str = "默认说明"
@@ -76,17 +84,17 @@ class BasePlugin:
             "args": [i.__dict__ for i in _args]
         }
 
-    def predict(self, text: str, image) -> Response:
+    def predict(self, text: str, image: list[PredictFile]) -> Response:
         if text:
             return self._predict_text(text)
         elif image:
-            return self._predict_image(text)
+            return self._predict_image(image)
         return ErrorResponse(msg="未开放")
 
     def _predict_text(self, text: str) -> Response:
         return ErrorResponse(msg="不支持文字预测")
 
-    def _predict_image(self, image) -> Response:
+    def _predict_image(self, image: list[PredictFile]) -> Response:
         return ErrorResponse(msg="不支持图片预测")
 
     @property
