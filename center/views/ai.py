@@ -12,6 +12,7 @@ from center.serializers import AIModelSerializer, TrainFileSerializer
 from center.serializers.ai import TrainPlanSerializer, TrainFileSimpleSerializer
 from plugin.plugin_tool import get_plugin_templates, PredictFile
 from utils import ListResponse, DetailResponse, ErrorResponse
+from utils.jenkins import get_jenkins_manager
 from utils.viewset import CustomModelViewSet
 
 
@@ -45,6 +46,9 @@ class AIModelViewSet(CustomModelViewSet):
             return ListResponse(data=serializer.data, msg="获取成功")
         else:
             data = request.data.copy()
+            flag, msg = get_jenkins_manager().create_job(data["name"], data["startup"])
+            if not flag:
+                return ErrorResponse(msg=msg)
             data["ai_model"] = instance.id
             serializer = TrainPlanSerializer(data=data, request=request)
             serializer.is_valid(raise_exception=True)

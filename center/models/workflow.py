@@ -76,6 +76,8 @@ class TrainTask(BaseModel):
                              verbose_name="使用的计划", db_comment="使用的计划")
     #    dataset = models.ForeignKey(DataSet, on_delete=models.CASCADE, related_name="tasks", help_text="使用的数据集",
     #                                verbose_name="使用的数据集", db_comment="使用的数据集")
+    number = models.IntegerField(db_default=0, default=0, help_text="构建次数",
+                                 verbose_name="构建次数", db_comment="构建次数")
     status = IntegerEnumField(enum=TrainTaskStatus, default=TrainTaskStatus.Waiting, db_default=TrainTaskStatus.Waiting,
                               help_text="任务状态", verbose_name="任务状态", db_comment="任务状态")
     finished_datetime = models.DateTimeField(null=True, blank=True, help_text="完成时间", verbose_name="完成时间",
@@ -85,6 +87,7 @@ class TrainTask(BaseModel):
         db_table = TABLE_PREFIX + "train_task"
         verbose_name = '训练任务'
         verbose_name_plural = verbose_name
+        unique_together = (("plan", "number"),)
         ordering = ("-create_datetime",)
 
 
@@ -121,6 +124,7 @@ class AiModelPowerApiKey(BaseModel):
     power = models.ForeignKey("AiModelPower", on_delete=models.CASCADE, related_name="keys")
     status = models.BooleanField(default=True, db_default=True, )
     key = models.CharField(max_length=32, help_text="key", verbose_name="key", db_comment="key")
+
     class Meta:
         db_table = TABLE_PREFIX + "ai_power_key"
         verbose_name = 'AI能力'

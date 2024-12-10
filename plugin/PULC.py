@@ -105,7 +105,28 @@ class PULCPlugin(BasePlugin):
 
     def get_startup(self, *args, **kwargs) -> StartupData:
         return StartupData(
-            value="""python -m paddle.distributed.launch --gpus="{gpus}" tools/train.py -c {config} -o Global.output_dir={result_folder} -o Global.save_inference_dir={result_folder}""",
+            value="""
+pipeline {
+    agent any
+    stages {
+        stage('Build') {
+            steps {
+                echo 'Building...'
+            }
+        }
+        stage('Test') {
+            steps {
+                echo 'Testing...'
+            }
+        }
+        stage('Deploy') {
+            steps {
+                echo 'Deploying...'
+            }
+        }
+    }
+}
+""",
             allow_modify=True
         )
 

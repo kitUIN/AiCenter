@@ -1,13 +1,18 @@
+import logging
+from datetime import datetime
+
 from rest_framework.decorators import action
 from rest_framework.request import Request
 
-from center.models import TrainTask
+from center.models import TrainTask, TrainPlan
 from center.serializers import TrainTaskSerializer
 from center.serializers.train_task import TrainTaskLogSerializer
 from enums import TrainTaskStatus
-from utils import DetailResponse
+from utils import DetailResponse, ErrorResponse
 from utils.viewset import CustomModelViewSet
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 class TrainTaskViewSet(CustomModelViewSet):
@@ -25,6 +30,33 @@ class TrainTaskViewSet(CustomModelViewSet):
         instance = self.get_object()  # type: TrainTask
         serializer = TrainTaskLogSerializer(instance, request=request)
         return DetailResponse(msg="获取成功", data=serializer.data)
+
+    @action(methods=["POST"], detail=False)
+    def notify(self, request, *args, **kwargs):
+        logger.info(request.data)
+        logger.info(request.POST)
+        return DetailResponse(msg="获取成功")
+
+    @action(methods=["POST"], detail=False, url_path="notify/queue")
+    def notify_queue(self, request, *args, **kwargs):
+        logger.info(request.data)
+        logger.info(request.POST)
+        return DetailResponse(msg="获取成功")
+
+    @action(methods=["POST"], detail=False, url_path="notify/build")
+    def notify_build(self, request, *args, **kwargs):
+        logger.info(request.data)
+        data = request.data.copy()
+        plan = TrainPlan.objects.filter(name=data["fullJobName"]).first()
+        if not plan:
+            return ErrorResponse(msg="找不到该计划")
+        if data["result"] == "INPROGRESS":
+            TrainTask.objects.update_or_create(plan_id=plan.id, ai_model_id=plan.ai_model_id, number=data["number"],
+                                     status=TrainTaskStatus.Running)
+        elif data["result"] == "SUCCESS":
+            TrainTask.objects.filter(plan_id=plan.id, number=data["number"]).update(finished_datetime=datetime.fromtimestamp(data["endTime"]/1000.0),
+                                                                                    status=TrainTaskStatus.Succeed)
+        return DetailResponse(msg="获取成功")
 
     @action(methods=["GET"], detail=True, url_path="log/detail")
     def log_detail(self, request, *args, **kwargs):
