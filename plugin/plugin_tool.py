@@ -68,8 +68,11 @@ class BasePlugin:
         """返回启动命令"""
         return StartupData()
 
+    def get_power_args(self, *args, **kwargs) -> list[ArgData]:
+        """配置参数"""
+        return []
+
     def get_args(self, *args, **kwargs) -> list[ArgData]:
-        """返回参数"""
         return []
 
     def get_task_steps(self, *args, **kwargs) -> list[TaskStepData]:
@@ -84,17 +87,18 @@ class BasePlugin:
             "args": [i.__dict__ for i in _args]
         }
 
-    def predict(self, text: str, image: list[PredictFile]) -> Response:
+    def predict(self, text: str, image: list[PredictFile], args: list[ArgData]) -> Response:
+        kwargs = {arg.name: arg.value for arg in args}
         if text:
-            return self._predict_text(text)
+            return self._predict_text(text, kwargs)
         elif image:
-            return self._predict_image(image)
+            return self._predict_image(image, kwargs)
         return ErrorResponse(msg="未开放")
 
-    def _predict_text(self, text: str) -> Response:
+    def _predict_text(self, text: str, kwargs: dict) -> Response:
         return ErrorResponse(msg="不支持文字预测")
 
-    def _predict_image(self, image: list[PredictFile]) -> Response:
+    def _predict_image(self, image: list[PredictFile], kwargs: dict) -> Response:
         return ErrorResponse(msg="不支持图片预测")
 
     @property

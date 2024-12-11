@@ -76,6 +76,7 @@ class CustomModelViewSet(ModelViewSet, QueryArgumentsMixin):
         return obj
 
     def filter_queryset(self, queryset: QuerySet) -> QuerySet:
+
         for backend in set(set(self.filter_backends) | set(self.extra_filter_backends or [])):
             # print(backend)
             queryset = backend().filter_queryset(self.request, queryset, self)

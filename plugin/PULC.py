@@ -130,10 +130,10 @@ pipeline {
             allow_modify=True
         )
 
-    def get_args(self, *args, **kwargs) -> list[ArgData]:
+    def get_power_args(self, *args, **kwargs) -> list[ArgData]:
         return [
-            ArgData(id=1, name="gpus", value="0", type="string", info="使用的GPU,逗号分隔"),
-            ArgData(id=2, name="config", value="", type="file", info="配置文件所在位置"),
+            ArgData(id=1, name="class_id_map_file", value="", type="file", info="模型分类标签文件"),
+            ArgData(id=2, name="inference_model_dir", value="", type="string", info="预测模型所在文件夹"),
         ]
 
     def get_task_steps(self, requirements, startup_cmd, *args, **kwargs) -> list[TaskStepData]:
@@ -148,8 +148,15 @@ pipeline {
             TaskStepData(name="开始训练", cmd=f"cd PaddleClas && {startup_cmd}", step_type="normal"),
         ]
 
-    def _predict_image(self, image: list[PredictFile]) -> Response:
-        config = get_config("./plugin/inference_traffic_sign.yaml", show=True)
+    def _predict_image(self, image: list[PredictFile], kwargs: dict) -> Response:
+        overrides = []
+        class_id_map_file = kwargs.get("class_id_map_file")
+        inference_model_dir = kwargs.get("inference_model_dir")
+        if inference_model_dir:
+            overrides.append(f"Global.inference_model_dir={inference_model_dir}")
+        if class_id_map_file:
+            overrides.append(f"PostProcess.TopK.class_id_map_file={class_id_map_file}")
+        config = get_config(kwargs.get("config"), show=True, overrides=overrides)
         cls_predictor = ClsPredictor(config)
         batch_imgs = []
         batch_names = []

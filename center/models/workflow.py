@@ -39,7 +39,7 @@ class TrainPlan(BaseModel):
 
 
 def train_directory_path(instance, filename: str):
-    return f"{settings.MEDIA_ROOT}/train/ai_{instance.ai_model.id}/files/{filename}"
+    return f"train/ai_{instance.ai_model.id}/files/{filename}"
 
 
 class TrainFile(CenterFile):
@@ -111,7 +111,11 @@ class TrainTaskStep(BaseModel):
 
 class AiModelPower(BaseModel):
     name = models.CharField(max_length=64, help_text="名称", verbose_name="名称", db_comment="名称")
-    task = models.ForeignKey("TrainTask", on_delete=models.CASCADE, related_name="powers")
+    task = models.OneToOneField("TrainTask", on_delete=models.CASCADE, related_name="power")
+    configured = models.BooleanField(default=False, db_default=False, help_text="是否已配置", verbose_name="是否已配置",
+                                     db_comment="是否已配置")
+
+    args = models.TextField(help_text="启动参数", verbose_name="启动参数", db_comment="启动参数")
 
     class Meta:
         db_table = TABLE_PREFIX + "ai_power"

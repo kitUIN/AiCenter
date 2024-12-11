@@ -1,6 +1,7 @@
 import jenkins
 
 from application.settings import JENKINS_URL, JENKINS_USERNAME, JENKINS_PASSWORD
+from center.models import TrainTask
 
 _jenkins_server = jenkins.Jenkins(JENKINS_URL, JENKINS_USERNAME, JENKINS_PASSWORD)
 
@@ -31,6 +32,9 @@ class JenkinsManager:
             return True, res
         except Exception as e:
             return False, str(e)
+
+    def stop_build(self, task: TrainTask):
+        return self.server.stop_build(task.plan.name, task.number)
 
 
 _jenkins_manager = JenkinsManager()

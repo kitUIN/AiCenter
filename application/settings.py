@@ -262,7 +262,7 @@ REST_FRAMEWORK = {
     "DATE_FORMAT": "%Y-%m-%d",
     "DEFAULT_FILTER_BACKENDS": (
         "django_filters.rest_framework.DjangoFilterBackend",
-        "rest_framework.filters.SearchFilter",
+        # "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ),
     "DEFAULT_PAGINATION_CLASS": "utils.pagination.CustomPagination",  # 自定义分页

@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from application.settings import JENKINS_URL
 from center.models import TrainTask
 from center.models.workflow import TrainTaskStep
 from center.tasks.workflow import get_now
@@ -13,13 +14,15 @@ class TrainTaskSerializer(CustomModelSerializer):
 
     def to_representation(self, instance: TrainTask):
         rep = super().to_representation(instance)
-        rep["name"] = f"{instance.plan.name} #{instance.id}"
+        rep["name"] = f"{instance.plan.name} #{instance.number}"
+        rep["log_url"] = f"{JENKINS_URL}/job/{instance.plan.name}/{instance.number}/pipeline-console/"
         if instance.status == TrainTaskStatus.Canceled:
             rep["running_status"] = "已取消"
         elif instance.status == TrainTaskStatus.Running:
             rep["running_status"] = "运行中"
         elif instance.status == TrainTaskStatus.Succeed:
             rep["running_status"] = "已完成"
+            rep["res_url"] = f"{JENKINS_URL}/job/{instance.plan.name}/{instance.number}/artifact/"
         elif instance.status == TrainTaskStatus.Fail:
             rep["running_status"] = "失败"
         else:

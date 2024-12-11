@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 
 from rest_framework.decorators import action
+from rest_framework.filters import SearchFilter
 from rest_framework.request import Request
 
 from center.models import TrainTask, TrainPlan
@@ -9,6 +10,7 @@ from center.serializers import TrainTaskSerializer
 from center.serializers.train_task import TrainTaskLogSerializer
 from enums import TrainTaskStatus
 from utils import DetailResponse, ErrorResponse
+from utils.jenkins import get_jenkins_manager
 from utils.viewset import CustomModelViewSet
 from pathlib import Path
 
@@ -18,12 +20,13 @@ logger = logging.getLogger(__name__)
 class TrainTaskViewSet(CustomModelViewSet):
     queryset = TrainTask.objects.all()
     serializer_class = TrainTaskSerializer
+    # filter_backends = [SearchFilter]
+    filterset_fields = ['plan', ]
 
     def destroy(self, request: Request, *args, **kwargs):
         instance = self.get_object()  # type: TrainTask
-        instance.status = TrainTaskStatus.Canceled
-        instance.save()
-        return DetailResponse(data=[], msg="删除成功")
+        get_jenkins_manager().stop_build(instance)
+        return DetailResponse(data=[], msg="发起中断任务成功")
 
     @action(methods=["GET"], detail=True, url_path="log")
     def log(self, request, *args, **kwargs):
@@ -52,10 +55,16 @@ class TrainTaskViewSet(CustomModelViewSet):
             return ErrorResponse(msg="找不到该计划")
         if data["result"] == "INPROGRESS":
             TrainTask.objects.update_or_create(plan_id=plan.id, ai_model_id=plan.ai_model_id, number=data["number"],
-                                     status=TrainTaskStatus.Running)
+                                               defaults={
+                                                   'status': TrainTaskStatus.Running
+                                               })
         elif data["result"] == "SUCCESS":
-            TrainTask.objects.filter(plan_id=plan.id, number=data["number"]).update(finished_datetime=datetime.fromtimestamp(data["endTime"]/1000.0),
-                                                                                    status=TrainTaskStatus.Succeed)
+            TrainTask.objects.filter(plan_id=plan.id, number=data["number"]).update(
+                finished_datetime=datetime.fromtimestamp(data["endTime"] / 1000.0),
+                status=TrainTaskStatus.Succeed)
+        elif data["result"] == "ABORTED":
+            TrainTask.objects.filter(plan_id=plan.id, number=data["number"]).update(
+                status=TrainTaskStatus.Canceled)
         return DetailResponse(msg="获取成功")
 
     @action(methods=["GET"], detail=True, url_path="log/detail")

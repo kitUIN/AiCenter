@@ -1,7 +1,7 @@
 import uuid
 
 from center.models.workflow import AiModelPower, AiModelPowerApiKey
-from center.serializers import AiModelPowerSerializer,AiModelPowerApiKeySerializer, AiModelPowerRetrieveSerializer
+from center.serializers import AiModelPowerSerializer, AiModelPowerApiKeySerializer, AiModelPowerRetrieveSerializer
 from utils import DetailResponse, ErrorResponse
 from utils.viewset import CustomModelViewSet
 from rest_framework.decorators import action
@@ -11,6 +11,7 @@ class AiModelPowerViewSet(CustomModelViewSet):
     queryset = AiModelPower.objects.all()
     serializer_class = AiModelPowerSerializer
     retrieve_serializer_class = AiModelPowerRetrieveSerializer
+
     @action(methods=["GET", "POST"], detail=True)
     def key(self, request, *args, **kwargs):
         instance = self.get_object()  # type: AiModelPower
@@ -39,5 +40,3 @@ class AiModelPowerViewSet(CustomModelViewSet):
             key.delete()
             return DetailResponse(msg="删除成功")
         return ErrorResponse(msg="密钥不存在")
-
-
