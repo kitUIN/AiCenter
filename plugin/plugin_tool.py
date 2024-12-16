@@ -1,8 +1,14 @@
+import json
 from dataclasses import dataclass
-from typing import Any, Type, Literal
+from typing import Type, Literal
+
+from rest_framework.request import Request
 from rest_framework.response import Response
 
+from center.models import TrainTask
+from center.models.workflow import AiModelPower
 from utils import ErrorResponse
+from utils.jenkins import get_jenkins_manager
 
 _plugin_templates = {}
 
@@ -87,19 +93,24 @@ class BasePlugin:
             "args": [i.__dict__ for i in _args]
         }
 
-    def predict(self, text: str, image: list[PredictFile], args: list[ArgData]) -> Response:
-        kwargs = {arg.name: arg.value for arg in args}
+    def predict(self, request: Request, text: str, image: list[PredictFile], power: AiModelPower) -> Response:
+        kwargs = {arg["name"]: arg["value"] for arg in json.loads(power.args)}
         if text:
-            return self._predict_text(text, kwargs)
+            return self._predict_text(request, text, power, kwargs)
         elif image:
-            return self._predict_image(image, kwargs)
+            return self._predict_image(request, image, power, kwargs)
         return ErrorResponse(msg="未开放")
 
-    def _predict_text(self, text: str, kwargs: dict) -> Response:
+    def _predict_text(self, request: Request, text: str, power: AiModelPower, kwargs: dict) -> Response:
         return ErrorResponse(msg="不支持文字预测")
 
-    def _predict_image(self, image: list[PredictFile], kwargs: dict) -> Response:
+    def _predict_image(self, request: Request, image: list[PredictFile], power: AiModelPower, kwargs: dict) -> Response:
         return ErrorResponse(msg="不支持图片预测")
+
+    def callback_task_success(self, task: TrainTask):
+        AiModelPower.objects.create(name=f"未命名能力{task.id}", task_id=task.id)
+        get_jenkins_manager().download_task_artifacts(task)
+        return None
 
     @property
     def key(self):
@@ -124,5 +135,6 @@ __all__ = [
     "ArgData",
     "StartupData",
     "TaskStepData",
-    "BasePlugin"
+    "BasePlugin",
+    "PredictFile",
 ]

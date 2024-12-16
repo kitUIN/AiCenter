@@ -31,6 +31,10 @@ class TrainPlanSerializer(CustomModelSerializer):
 
 
 class AiModelPowerSerializer(CustomModelSerializer):
+    task_name = serializers.CharField(source='task.name', read_only=True)
+    ai_model = serializers.IntegerField(source='task.ai_model.id', allow_null=True, read_only=True)
+    ai_model_name = serializers.CharField(source='task.ai_model.name', read_only=True)
+
     class Meta:
         model = AiModelPower
         fields = "__all__"

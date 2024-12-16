@@ -1,3 +1,7 @@
+from pathlib import Path
+
+import requests
+
 import jenkins
 
 from application.settings import JENKINS_URL, JENKINS_USERNAME, JENKINS_PASSWORD
@@ -36,11 +40,25 @@ class JenkinsManager:
     def stop_build(self, task: TrainTask):
         return self.server.stop_build(task.plan.name, task.number)
 
+    def download_task_artifacts(self, task: TrainTask):
+        res = self.server.get_build_info(task.plan.name, task.number)
+        for i in res["artifacts"]:
+            r = requests.get(f'{JENKINS_URL}/job/{task.plan.name}/{task.number}/artifact/{i["relativePath"]}',
+                             stream=True)
+            filename = Path(f'artifact/{task.plan.name}/{task.number}/{i["relativePath"]}')
+            folder = filename.parent
+            if not folder.exists():
+                folder.mkdir(parents=True, exist_ok=True)
+            with open(filename, "wb") as f:
+                for bl in r.iter_content(chunk_size=1024):
+                    if bl:
+                        f.write(bl)
+
 
 _jenkins_manager = JenkinsManager()
 
 
-def get_jenkins_manager():
+def get_jenkins_manager() -> JenkinsManager:
     return _jenkins_manager
 
 

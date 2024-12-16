@@ -70,6 +70,8 @@ class TrainConfigFile(CenterFile):
 
 class TrainTask(BaseModel):
     """训练任务"""
+    name = models.CharField(max_length=64, help_text="名称", verbose_name="名称", db_comment="名称")
+
     ai_model = models.ForeignKey(AIModel, on_delete=models.CASCADE, related_name="tasks", help_text="关联的模型",
                                  verbose_name="关联的模型", db_comment="关联的模型")
     plan = models.ForeignKey(TrainPlan, on_delete=models.CASCADE, related_name="tasks", help_text="使用的计划",
@@ -114,20 +116,20 @@ class AiModelPower(BaseModel):
     task = models.OneToOneField("TrainTask", on_delete=models.CASCADE, related_name="power")
     configured = models.BooleanField(default=False, db_default=False, help_text="是否已配置", verbose_name="是否已配置",
                                      db_comment="是否已配置")
-
     args = models.TextField(help_text="启动参数", verbose_name="启动参数", db_comment="启动参数")
 
     class Meta:
         db_table = TABLE_PREFIX + "ai_power"
         verbose_name = 'AI能力'
         verbose_name_plural = verbose_name
+        ordering = ("-create_datetime",)
 
 
 class AiModelPowerApiKey(BaseModel):
     id = models.CharField(max_length=128, primary_key=True, help_text="密钥", verbose_name="密钥", db_comment="密钥")
     power = models.ForeignKey("AiModelPower", on_delete=models.CASCADE, related_name="keys")
     status = models.BooleanField(default=True, db_default=True, )
-    key = models.CharField(max_length=32, help_text="key", verbose_name="key", db_comment="key")
+    key = models.CharField(max_length=64, help_text="插件Key", verbose_name="插件Key", db_comment="插件Key")
 
     class Meta:
         db_table = TABLE_PREFIX + "ai_power_key"

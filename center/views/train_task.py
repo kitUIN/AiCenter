@@ -6,9 +6,11 @@ from rest_framework.filters import SearchFilter
 from rest_framework.request import Request
 
 from center.models import TrainTask, TrainPlan
+from center.models.workflow import AiModelPower
 from center.serializers import TrainTaskSerializer
 from center.serializers.train_task import TrainTaskLogSerializer
 from enums import TrainTaskStatus
+from plugin import get_plugin_templates
 from utils import DetailResponse, ErrorResponse
 from utils.jenkins import get_jenkins_manager
 from utils.viewset import CustomModelViewSet
@@ -57,11 +59,23 @@ class TrainTaskViewSet(CustomModelViewSet):
             TrainTask.objects.update_or_create(plan_id=plan.id, ai_model_id=plan.ai_model_id, number=data["number"],
                                                defaults={
                                                    'status': TrainTaskStatus.Running
+                                               },
+                                               create_defaults={
+                                                   "name": f"{plan.name} #{data['number']}",
+                                                   "plan_id": plan.id,
+                                                   "ai_model_id": plan.ai_model_id,
+                                                   "number": data["number"],
+                                                   "status": TrainTaskStatus.Running,
                                                })
         elif data["result"] == "SUCCESS":
             TrainTask.objects.filter(plan_id=plan.id, number=data["number"]).update(
                 finished_datetime=datetime.fromtimestamp(data["endTime"] / 1000.0),
                 status=TrainTaskStatus.Succeed)
+            task = TrainTask.objects.filter(plan_id=plan.id, number=data["number"]).first()
+            if task:
+                templates = get_plugin_templates()
+                if plan.ai_model.key in templates.keys():
+                    templates[plan.ai_model.key]().callback_task_success(task)
         elif data["result"] == "ABORTED":
             TrainTask.objects.filter(plan_id=plan.id, number=data["number"]).update(
                 status=TrainTaskStatus.Canceled)

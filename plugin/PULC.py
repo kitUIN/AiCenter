@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import cv2
 import numpy as np
 from paddleclas.deploy.python.postprocess import build_postprocess
@@ -5,9 +7,12 @@ from paddleclas.deploy.python.preprocess import create_operators
 from paddleclas.deploy.utils import logger
 from paddleclas.deploy.utils.config import get_config
 from paddleclas.deploy.utils.predictor import Predictor
+from rest_framework.request import Request
 from rest_framework.response import Response
 
+from center.models.workflow import AiModelPower, TrainTask
 from utils import DetailResponse, ErrorResponse
+from utils.jenkins import get_jenkins_manager
 from .plugin_tool import BasePlugin, plugin_template, StartupData, ArgData, TaskStepData, PredictFile
 
 
@@ -105,28 +110,41 @@ class PULCPlugin(BasePlugin):
 
     def get_startup(self, *args, **kwargs) -> StartupData:
         return StartupData(
-            value="""
-pipeline {
+            value="""pipeline {
     agent any
     stages {
-        stage('Build') {
+        stage('虚拟环境') {
             steps {
-                echo 'Building...'
+                script {
+                    sh 'mkdir -p ${WORKSPACE}/result'
+                    sh 'mkdir -p ${WORKSPACE}/model'
+                    bat 'D:/PycharmProjects/AiCenter/.venv/Scripts/activate.bat'
+                }
             }
         }
-        stage('Test') {
+        stage('训练模型') {
             steps {
-                echo 'Testing...'
+                script {
+                    bat \"\"\"
+                    cd D:/PaddleClas
+                    python -m paddle.distributed.launch --gpus="0" tools/train.py -c ./ppcls/configs/PULC/traffic_sign/PPLCNet_x1_0.yaml -o Global.output_dir=${WORKSPACE}/result -o Global.save_inference_dir=${WORKSPACE}/result
+                    \"\"\"
+                }
             }
         }
-        stage('Deploy') {
+        stage('导出模型') {
             steps {
-                echo 'Deploying...'
+                script {
+                    bat \"\"\"
+                    cd D:/PaddleClas
+                    python tools/export_model.py -c ./ppcls/configs/PULC/traffic_sign/PPLCNet_x1_0.yaml -o Global.pretrained_model=${WORKSPACE}/result/best_model -o Global.save_inference_dir=${WORKSPACE}/model
+                    \"\"\"
+                    archiveArtifacts artifacts: 'model/**', followSymlinks: false
+                }
             }
         }
     }
-}
-""",
+}""",
             allow_modify=True
         )
 
@@ -148,10 +166,11 @@ pipeline {
             TaskStepData(name="开始训练", cmd=f"cd PaddleClas && {startup_cmd}", step_type="normal"),
         ]
 
-    def _predict_image(self, image: list[PredictFile], kwargs: dict) -> Response:
+    def _predict_image(self, request: Request, image: list[PredictFile], power: AiModelPower, kwargs: dict) -> Response:
         overrides = []
         class_id_map_file = kwargs.get("class_id_map_file")
-        inference_model_dir = kwargs.get("inference_model_dir")
+        inference_model_dir = kwargs.get("inference_model_dir",
+                                         Path(f"artifact/{power.task.plan.name}/{power.task.number}/model"))
         if inference_model_dir:
             overrides.append(f"Global.inference_model_dir={inference_model_dir}")
         if class_id_map_file:
@@ -186,3 +205,8 @@ pipeline {
         if res:
             return DetailResponse(data=res, msg="查询成功")
         return ErrorResponse(msg="无结果")
+
+    def callback_task_success(self, task: TrainTask):
+        AiModelPower.objects.create(name=f"未命名能力{task.id}", task_id=task.id, configured=True)
+        get_jenkins_manager().download_task_artifacts(task)
+        return None

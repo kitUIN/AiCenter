@@ -19,6 +19,7 @@ class TrainPlanViewSet(CustomModelViewSet):
         plan = self.get_object()  # type: TrainPlan
         server = get_jenkins_manager().server
         next_build_number = server.get_job_info(plan.name)['nextBuildNumber']
-        TrainTask.objects.create(plan_id=plan.id, ai_model_id=plan.ai_model_id, number=next_build_number)
+        TrainTask.objects.create(name=f"{plan.name} #{next_build_number}", plan_id=plan.id,
+                                 ai_model_id=plan.ai_model_id, number=next_build_number)
         server.build_job(plan.name)
         return DetailResponse(msg="启动成功")

@@ -14,7 +14,6 @@ class TrainTaskSerializer(CustomModelSerializer):
 
     def to_representation(self, instance: TrainTask):
         rep = super().to_representation(instance)
-        rep["name"] = f"{instance.plan.name} #{instance.number}"
         rep["log_url"] = f"{JENKINS_URL}/job/{instance.plan.name}/{instance.number}/pipeline-console/"
         if instance.status == TrainTaskStatus.Canceled:
             rep["running_status"] = "已取消"
