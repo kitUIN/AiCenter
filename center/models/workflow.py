@@ -117,6 +117,7 @@ class AiModelPower(BaseModel):
     configured = models.BooleanField(default=False, db_default=False, help_text="是否已配置", verbose_name="是否已配置",
                                      db_comment="是否已配置")
     args = models.TextField(help_text="启动参数", verbose_name="启动参数", db_comment="启动参数")
+    key = models.CharField(max_length=64, help_text="插件Key", verbose_name="插件Key", db_comment="插件Key")
 
     class Meta:
         db_table = TABLE_PREFIX + "ai_power"

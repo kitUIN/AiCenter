@@ -13,7 +13,8 @@ from rest_framework.response import Response
 from center.models.workflow import AiModelPower, TrainTask
 from utils import DetailResponse, ErrorResponse
 from utils.jenkins import get_jenkins_manager
-from .plugin_tool import BasePlugin, plugin_template, StartupData, ArgData, TaskStepData, PredictFile
+from .plugin_tool import BasePlugin, plugin_template, StartupData, ArgData, TaskStepData, PredictFile, ApiDocData, \
+    ApiDocArgData
 
 
 class ClsPredictor(Predictor):
@@ -207,6 +208,41 @@ class PULCPlugin(BasePlugin):
         return ErrorResponse(msg="无结果")
 
     def callback_task_success(self, task: TrainTask):
-        AiModelPower.objects.create(name=f"未命名能力{task.id}", task_id=task.id, configured=True)
+        AiModelPower.objects.create(name=f"未命名能力{task.id}", task_id=task.id, key=self.key, configured=True)
         get_jenkins_manager().download_task_artifacts(task)
         return None
+
+    def get_api_doc(self, *args, **kwargs) -> ApiDocData:
+        return ApiDocData(name="预测", description="使用模型进行预测分析",
+                          method="POST", content_type="multipart/form-data", api="/predict",
+                          request_body=[
+                              ApiDocArgData(
+                                  name="file",
+                                  arg_type="File",
+                                  description="需要进行预测分析的图片",
+                                  required=True)
+                          ],
+                          response_body=[
+                              ApiDocArgData(
+                                  name="code",
+                                  arg_type="int",
+                                  description="状态码,200为成功",
+                                  required=True),
+                              ApiDocArgData(
+                                  name="msg",
+                                  arg_type="string",
+                                  description="返回说明",
+                                  required=True),
+                              ApiDocArgData(
+                                  name="data",
+                                  arg_type="object",
+                                  description="仅成功时返回",
+                                  children=[
+                                      ApiDocArgData(
+                                          name="score",
+                                          arg_type="double",
+                                          description="识别分数",
+                                          required=True),
+                                  ]
+                              ),
+                          ])

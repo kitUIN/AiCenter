@@ -1,5 +1,5 @@
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Type, Literal
 
 from rest_framework.request import Request
@@ -60,6 +60,48 @@ class PredictFile:
     """内容"""
 
 
+@dataclass
+class ApiDocArgData:
+    name: str
+    """参数"""
+
+    arg_type: str
+    """参数类型"""
+
+    children: list["ApiDocArgData"] = field(default_factory=list)
+    """子参数"""
+
+    required: bool = False
+    """是否必须"""
+
+    description: str = ""
+    """描述"""
+
+
+@dataclass
+class ApiDocData:
+    name: str
+    """接口名称"""
+    api: str
+    """接口路径"""
+    method: Literal["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD"]
+    """请求内容类型"""
+    content_type: Literal[
+        "multipart/form-data", "application/x-www-form-urlencoded", "application/json", "application/xml",
+        "text/plain", "application/octet-stream", "none"]
+    """请求方法"""
+    request_body: list[ApiDocArgData] = field(default_factory=list)
+    """请求参数"""
+    response_body: list[ApiDocArgData] = field(default_factory=list)
+    """返回参数"""
+    description: str = ""
+    """描述"""
+    request_example: str = ""
+    """请求示例"""
+    response_example: str = ""
+    """返回示例"""
+
+
 class BasePlugin:
     _key: str = "base"
     _info: str = "默认说明"
@@ -108,9 +150,12 @@ class BasePlugin:
         return ErrorResponse(msg="不支持图片预测")
 
     def callback_task_success(self, task: TrainTask):
-        AiModelPower.objects.create(name=f"未命名能力{task.id}", task_id=task.id)
+        AiModelPower.objects.create(name=f"未命名能力{task.id}", task_id=task.id, key=self.key)
         get_jenkins_manager().download_task_artifacts(task)
         return None
+
+    def get_api_doc(self, *args, **kwargs) -> ApiDocData:
+        return ApiDocData(name="预测", method="POST", content_type="multipart/form-data", api="/predict", )
 
     @property
     def key(self):
@@ -137,4 +182,6 @@ __all__ = [
     "TaskStepData",
     "BasePlugin",
     "PredictFile",
+    "ApiDocData",
+    "ApiDocArgData",
 ]
