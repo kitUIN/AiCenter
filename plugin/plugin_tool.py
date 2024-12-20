@@ -1,4 +1,5 @@
 import json
+import logging
 from dataclasses import dataclass, field
 from typing import Type, Literal
 
@@ -6,11 +7,13 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from center.models import TrainTask
-from center.models.workflow import AiModelPower
+from center.models.workflow import AiModelPower, TrainFile
 from utils import ErrorResponse
 from utils.jenkins import get_jenkins_manager
 
 _plugin_templates = {}
+
+logger = logging.getLogger(__name__)
 
 
 def plugin_template(cls):
@@ -26,12 +29,14 @@ class ArgData:
     """参数名称"""
     type: Literal["string", "file"] = "string"
     """参数类型"""
-    value: str = ""
+    value: str | None = None
     """参数值"""
     info: str | None = None
     """说明"""
     allow_modify: bool = True
     """是否允许修改"""
+    required: bool = False
+    """是否必填"""
 
 
 @dataclass
@@ -102,6 +107,19 @@ class ApiDocData:
     """返回示例"""
 
 
+def get_predict_kwargs(args: str):
+    kwargs = {}
+    if args:
+        for arg in json.loads(args):
+            if arg["type"] == "file":
+                file_id = arg["value"].split("#")[-1]
+                file = TrainFile.objects.filter(id=file_id).first()
+                kwargs[arg["name"]] = file.file.path
+            else:
+                kwargs[arg["name"]] = arg["value"]
+    return kwargs
+
+
 class BasePlugin:
     _key: str = "base"
     _info: str = "默认说明"
@@ -136,7 +154,8 @@ class BasePlugin:
         }
 
     def predict(self, request: Request, text: str, image: list[PredictFile], power: AiModelPower) -> Response:
-        kwargs = {arg["name"]: arg["value"] for arg in json.loads(power.args)}
+        kwargs = get_predict_kwargs(power.args)
+        logger.info(f"能力#{power.id}({power.name})进行预测,参数:{kwargs}")
         if text:
             return self._predict_text(request, text, power, kwargs)
         elif image:
@@ -150,7 +169,7 @@ class BasePlugin:
         return ErrorResponse(msg="不支持图片预测")
 
     def callback_task_success(self, task: TrainTask):
-        AiModelPower.objects.create(name=f"未命名能力{task.id}", task_id=task.id, key=self.key)
+        AiModelPower.objects.create(name=f"未命名能力{task.id}", task_id=task.id, key=self.key, args=[])
         get_jenkins_manager().download_task_artifacts(task)
         return None
 

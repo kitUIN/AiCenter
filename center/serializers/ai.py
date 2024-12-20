@@ -40,6 +40,12 @@ class AiModelPowerSerializer(CustomModelSerializer):
         fields = "__all__"
 
 
+class AiModelPowerUpdateSerializer(CustomModelSerializer):
+    class Meta:
+        model = AiModelPower
+        fields = ["name"]
+
+
 def get_arg(body: list[ApiDocArgData], dep: int = 0):
     res = []
     for i in body:
@@ -69,8 +75,8 @@ class AiModelPowerRetrieveSerializer(CustomModelSerializer):
                 "description": arg.description,
                 "request_body": get_arg(arg.request_body),
                 "response_body": get_arg(arg.response_body),
-                "request_example":arg.request_example,
-                "response_example":arg.response_example,
+                "request_example": arg.request_example,
+                "response_example": arg.response_example,
             })
         rep["doc"] = doc
         return rep

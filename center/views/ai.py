@@ -134,7 +134,7 @@ class AIModelViewSet(CustomModelViewSet):
         if not auth_header:
             return ErrorResponse(msg="缺少身份认证", code=401, status=401)
         token = auth_header[7:] if auth_header.startswith('Bearer ') else None
-        api_key = AiModelPowerApiKey.objects.filter(token=token).first()
+        api_key = AiModelPowerApiKey.objects.filter(id=token).first()
         if not api_key or (api_key and not api_key.status):
             return ErrorResponse(msg="无效的身份认证", code=401, status=401)
         power = api_key.power

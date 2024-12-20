@@ -1,7 +1,10 @@
+import json
 import uuid
 
 from center.models.workflow import AiModelPower, AiModelPowerApiKey
 from center.serializers import AiModelPowerSerializer, AiModelPowerApiKeySerializer, AiModelPowerRetrieveSerializer
+from center.serializers.ai import AiModelPowerUpdateSerializer
+from plugin import get_plugin_templates, ArgData
 from utils import DetailResponse, ErrorResponse
 from utils.viewset import CustomModelViewSet
 from rest_framework.decorators import action
@@ -11,6 +14,7 @@ class AiModelPowerViewSet(CustomModelViewSet):
     queryset = AiModelPower.objects.all()
     serializer_class = AiModelPowerSerializer
     retrieve_serializer_class = AiModelPowerRetrieveSerializer
+    update_serializer_class = AiModelPowerUpdateSerializer
 
     @action(methods=["GET", "POST"], detail=True)
     def key(self, request, *args, **kwargs):
@@ -40,3 +44,29 @@ class AiModelPowerViewSet(CustomModelViewSet):
             key.delete()
             return DetailResponse(msg="删除成功")
         return ErrorResponse(msg="密钥不存在")
+
+    @action(methods=["GET", "POST"], detail=True, url_path="args")
+    def args(self, request, *args, **kwargs):
+        instance = self.get_object()  # type: AiModelPower
+        templates = get_plugin_templates()
+        if instance.key not in templates.keys():
+            return ErrorResponse(msg="找不到对应的命令模板")
+        template_class = templates[instance.key]
+        template = template_class()
+        args = template.get_power_args()
+        if request.method == "GET":
+            if instance.configured:
+                return DetailResponse(msg="查询成功", data=json.loads(instance.args))
+            return DetailResponse(msg="查询成功", data=[arg.__dict__ for arg in args])
+        else:
+            req_args_string = request.data.get("args")
+            if not req_args_string:
+                return ErrorResponse(msg="缺少参数")
+            req_args = [ArgData(**i) for i in json.loads(req_args_string)]
+            required = [arg.name for arg in args if arg.required]
+            req_arg_names = [arg.name for arg in req_args]
+            for required_arg in required:
+                if required_arg not in req_arg_names:
+                    return ErrorResponse(msg=f"缺失必要参数:{required_arg}")
+            AiModelPower.objects.filter(id=instance.id).update(args=req_args_string, configured=True)
+            return DetailResponse(msg="配置成功")

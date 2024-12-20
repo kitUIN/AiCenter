@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import cv2
@@ -151,8 +152,10 @@ class PULCPlugin(BasePlugin):
 
     def get_power_args(self, *args, **kwargs) -> list[ArgData]:
         return [
-            ArgData(id=1, name="class_id_map_file", value="", type="file", info="模型分类标签文件"),
-            ArgData(id=2, name="inference_model_dir", value="", type="string", info="预测模型所在文件夹"),
+            ArgData(id=0, name="config",
+                    value="", required=True, type="file", info="模型配置文件"),
+            ArgData(id=1, name="class_id_map_file", value=None, type="file", required=False, info="模型分类标签文件"),
+            ArgData(id=2, name="inference_model_dir", value=None, type="file", info="预测模型所在文件夹"),
         ]
 
     def get_task_steps(self, requirements, startup_cmd, *args, **kwargs) -> list[TaskStepData]:
@@ -206,11 +209,6 @@ class PULCPlugin(BasePlugin):
         if res:
             return DetailResponse(data=res, msg="查询成功")
         return ErrorResponse(msg="无结果")
-
-    def callback_task_success(self, task: TrainTask):
-        AiModelPower.objects.create(name=f"未命名能力{task.id}", task_id=task.id, key=self.key, configured=True)
-        get_jenkins_manager().download_task_artifacts(task)
-        return None
 
     def get_api_doc(self, *args, **kwargs) -> ApiDocData:
         return ApiDocData(name="预测", description="使用模型进行预测分析",
