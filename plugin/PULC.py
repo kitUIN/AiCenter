@@ -114,6 +114,9 @@ class PULCPlugin(BasePlugin):
         return StartupData(
             value="""pipeline {
     agent any
+    environment {
+#CUSTOM_ENV_ARGS#
+    }
     stages {
         stage('虚拟环境') {
             steps {
@@ -129,7 +132,7 @@ class PULCPlugin(BasePlugin):
                 script {
                     bat \"\"\"
                     cd D:/PaddleClas
-                    python -m paddle.distributed.launch --gpus="0" tools/train.py -c ./ppcls/configs/PULC/traffic_sign/PPLCNet_x1_0.yaml -o Global.output_dir=${WORKSPACE}/result -o Global.save_inference_dir=${WORKSPACE}/result
+                    python -m paddle.distributed.launch --gpus="0" tools/train.py -c ${TRAIN_MODEL_CONFIG_FILE} -o Global.output_dir=${WORKSPACE}/result -o Global.save_inference_dir=${WORKSPACE}/result
                     \"\"\"
                 }
             }
@@ -139,7 +142,7 @@ class PULCPlugin(BasePlugin):
                 script {
                     bat \"\"\"
                     cd D:/PaddleClas
-                    python tools/export_model.py -c ./ppcls/configs/PULC/traffic_sign/PPLCNet_x1_0.yaml -o Global.pretrained_model=${WORKSPACE}/result/best_model -o Global.save_inference_dir=${WORKSPACE}/model
+                    python tools/export_model.py -c ${EXPORT_MODEL_CONFIG_FILE} -o Global.pretrained_model=${WORKSPACE}/result/best_model -o Global.save_inference_dir=${WORKSPACE}/model
                     \"\"\"
                     archiveArtifacts artifacts: 'model/**', followSymlinks: false
                 }
@@ -149,25 +152,20 @@ class PULCPlugin(BasePlugin):
 }""",
             allow_modify=True
         )
-
+    def get_startup_args(self, *args, **kwargs) -> list[ArgData]:
+        return [
+            # ./ppcls/configs/PULC/traffic_sign/PPLCNet_x1_0.yaml
+            ArgData(id=0, name="TRAIN_MODEL_CONFIG_FILE", value=None, type="file", required=False, info="模型训练配置文件"),
+            # ./ppcls/configs/PULC/traffic_sign/PPLCNet_x1_0.yaml
+            ArgData(id=1, name="EXPORT_MODEL_CONFIG_FILE",
+                    value="", required=True, type="file", info="模型导出配置文件"),
+        ]
     def get_power_args(self, *args, **kwargs) -> list[ArgData]:
         return [
             ArgData(id=0, name="config",
                     value="", required=True, type="file", info="模型配置文件"),
             ArgData(id=1, name="class_id_map_file", value=None, type="file", required=False, info="模型分类标签文件"),
             ArgData(id=2, name="inference_model_dir", value=None, type="file", info="预测模型所在文件夹"),
-        ]
-
-    def get_task_steps(self, requirements, startup_cmd, *args, **kwargs) -> list[TaskStepData]:
-        return [
-            # TaskStepData(name="创建虚拟环境", cmd="", step_type="venv"),
-            # TaskStepData(name="安装依赖", cmd=f"pip install -r {requirements}", step_type="normal"),
-            # TaskStepData(name="安装paddlepaddle", cmd="python -m pip install paddlepaddle-gpu==3.0.0b2 -i "
-            #                                           "https://www.paddlepaddle.org.cn/packages/stable/cu123/",
-            #              step_type="normal"),
-            TaskStepData(name="下载PaddleClas环境", cmd=r"mklink /j PaddleClas D:\PaddleClas",
-                         step_type="normal"),
-            TaskStepData(name="开始训练", cmd=f"cd PaddleClas && {startup_cmd}", step_type="normal"),
         ]
 
     def _predict_image(self, request: Request, image: list[PredictFile], power: AiModelPower, kwargs: dict) -> Response:

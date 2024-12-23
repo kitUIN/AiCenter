@@ -1,16 +1,13 @@
-from django.contrib.auth.base_user import AbstractBaseUser
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.request import Request
-from rest_framework.response import Response
 
 from center.models import AIModel
 from center.models.ai import AITag
 from center.models.workflow import TrainFile, TrainPlan, AiModelPowerApiKey
 from center.serializers import AIModelSerializer, TrainFileSerializer
 from center.serializers.ai import TrainPlanSerializer, TrainFileSimpleSerializer
-from plugin.plugin_tool import get_plugin_templates, PredictFile
+from plugin.plugin_tool import get_plugin_templates, PredictFile, get_predict_kwargs
 from utils import ListResponse, DetailResponse, ErrorResponse
 from utils.jenkins import get_jenkins_manager
 from utils.viewset import CustomModelViewSet
@@ -46,7 +43,12 @@ class AIModelViewSet(CustomModelViewSet):
             return ListResponse(data=serializer.data, msg="获取成功")
         else:
             data = request.data.copy()
-            flag, msg = get_jenkins_manager().create_job(data["name"], data["startup"])
+            args = get_predict_kwargs(data.get("args", "[]"))
+            if args and "#CUSTOM_ENV_ARGS#" not in data["startup"]:
+                return ErrorResponse(msg="您使用了脚本参数,但是并没有在脚本中添加#CUSTOM_ENV_ARGS#,请确认")
+            startup = data["startup"].replace('#CUSTOM_ENV_ARGS#',
+                                              "\n".join([f"        {k} = \"{v}\"" for k, v in args.items()]))
+            flag, msg = get_jenkins_manager().create_job(data["name"], startup)
             if not flag:
                 return ErrorResponse(msg=msg)
             data["ai_model"] = instance.id

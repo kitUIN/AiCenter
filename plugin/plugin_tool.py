@@ -107,7 +107,7 @@ class ApiDocData:
     """返回示例"""
 
 
-def get_predict_kwargs(args: str):
+def get_predict_kwargs(args: str) -> dict:
     kwargs = {}
     if args:
         for arg in json.loads(args):
@@ -138,16 +138,12 @@ class BasePlugin:
         """配置参数"""
         return []
 
-    def get_args(self, *args, **kwargs) -> list[ArgData]:
-        return []
-
-    def get_task_steps(self, *args, **kwargs) -> list[TaskStepData]:
-        """返回训练步骤"""
+    def get_startup_args(self, *args, **kwargs) -> list[ArgData]:
         return []
 
     def get_plan(self, *args, **kwargs) -> dict:
         startup = self.get_startup(*args, **kwargs)
-        _args = self.get_args(*args, **kwargs)
+        _args = self.get_startup_args(*args, **kwargs)
         return {
             "startup": startup.__dict__,
             "args": [i.__dict__ for i in _args]
