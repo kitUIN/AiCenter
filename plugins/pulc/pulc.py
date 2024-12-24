@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 
 import cv2
@@ -9,13 +8,8 @@ from paddleclas.deploy.utils import logger
 from paddleclas.deploy.utils.config import get_config
 from paddleclas.deploy.utils.predictor import Predictor
 from rest_framework.request import Request
-from rest_framework.response import Response
 
-from center.models.workflow import AiModelPower, TrainTask
-from utils import DetailResponse, ErrorResponse
-from utils.jenkins import get_jenkins_manager
-from .plugin_tool import BasePlugin, plugin_template, StartupData, ArgData, TaskStepData, PredictFile, ApiDocData, \
-    ApiDocArgData
+from sdk.plugin_tool import *
 
 
 class ClsPredictor(Predictor):
@@ -102,7 +96,6 @@ class ClsPredictor(Predictor):
         return batch_output
 
 
-@plugin_template
 class PULCPlugin(BasePlugin):
     _key = "PULC"
     _info = "超轻量图像分类"
@@ -171,7 +164,7 @@ class PULCPlugin(BasePlugin):
             ArgData(id=2, name="inference_model_dir", value=None, type="file", info="预测模型所在文件夹"),
         ]
 
-    def _predict_image(self, request: Request, image: list[PredictFile], power: AiModelPower, kwargs: dict) -> Response:
+    def _predict_image(self, request: Request, image: list[PredictFile], power, kwargs: dict) -> dict:
         overrides = []
         class_id_map_file = kwargs.get("class_id_map_file")
         inference_model_dir = kwargs.get("inference_model_dir",
@@ -208,8 +201,8 @@ class PULCPlugin(BasePlugin):
                 result_dict["scores"] = [round(i, 3) for i in result_dict["scores"]]
             res.append({"filename": filename, "result": result_dict})
         if res:
-            return DetailResponse(data=res, msg="查询成功")
-        return ErrorResponse(msg="无结果")
+            return {"code": 200, "data": res, "msg": "查询成功"}
+        return {"code": 400, "data": None, "msg": "无结果"}
 
     def get_api_doc(self, *args, **kwargs) -> ApiDocData:
         return ApiDocData(name="预测", description="使用模型进行预测分析",

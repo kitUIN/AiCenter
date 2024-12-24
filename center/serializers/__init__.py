@@ -3,3 +3,4 @@ from .ai import AIModelSerializer, TrainFileSerializer, TrainPlanSerializer, AiM
     AiModelPowerApiKeySerializer, AiModelPowerRetrieveSerializer
 from .train_config_file import TrainConfigFileSerializer
 from .train_task import TrainTaskSerializer
+from .worker import WorkerSerializer

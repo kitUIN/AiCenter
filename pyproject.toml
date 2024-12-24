@@ -29,6 +29,8 @@ django-concurrency = "^2.6.0"
 mysqlclient = "^2.2.5"
 drf-yasg = "^1.21.8"
 label-studio-sdk = "^1.0.7"
+fastapi = "^0.115.6"
+redis = "^5.2.1"
 
 
 [build-system]
