@@ -1,9 +1,10 @@
 import json
 import uuid
 
+from center.models import Worker
 from center.models.workflow import AiModelPower, AiModelPowerApiKey
 from center.serializers import AiModelPowerSerializer, AiModelPowerApiKeySerializer, AiModelPowerRetrieveSerializer
-from center.serializers.ai import AiModelPowerUpdateSerializer
+from center.serializers.ai import AiModelPowerUpdateSerializer, AiModelPowerArgsSerializer
 from plugin import get_plugin_templates, ArgData
 from utils import DetailResponse, ErrorResponse
 from utils.viewset import CustomModelViewSet
@@ -48,16 +49,17 @@ class AiModelPowerViewSet(CustomModelViewSet):
     @action(methods=["GET", "POST"], detail=True, url_path="args")
     def args(self, request, *args, **kwargs):
         instance = self.get_object()  # type: AiModelPower
-        templates = get_plugin_templates()
-        if instance.key not in templates.keys():
-            return ErrorResponse(msg="找不到对应的命令模板")
-        template_class = templates[instance.key]
-        template = template_class()
-        args = template.get_power_args()
         if request.method == "GET":
             if instance.configured:
                 return DetailResponse(msg="查询成功", data=json.loads(instance.args))
-            return DetailResponse(msg="查询成功", data=[arg.__dict__ for arg in args])
+            if not Worker.is_active(instance.key):
+                return ErrorResponse(msg="插件服务不在线")
+            worker = Worker.objects.get(id=instance.key)
+            data = AiModelPowerArgsSerializer(instance).data
+            res = worker.get_power_args(data)
+            if res['code'] != 200:
+                return ErrorResponse(msg=res['msg'])
+            return DetailResponse(msg="查询成功", data=res['data'])
         else:
             req_args_string = request.data.get("args")
             if not req_args_string:

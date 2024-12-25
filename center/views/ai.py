@@ -2,12 +2,12 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 from rest_framework.decorators import action
 from rest_framework.request import Request
 
-from center.models import AIModel
+from center.models import AIModel, Worker
 from center.models.ai import AITag
 from center.models.workflow import TrainFile, TrainPlan, AiModelPowerApiKey
 from center.serializers import AIModelSerializer, TrainFileSerializer
 from center.serializers.ai import TrainPlanSerializer, TrainFileSimpleSerializer
-from plugin.plugin_tool import get_plugin_templates, PredictFile, get_predict_kwargs
+from sdk.plugin_tool import get_predict_kwargs
 from utils import ListResponse, DetailResponse, ErrorResponse
 from utils.jenkins import get_jenkins_manager
 from utils.viewset import CustomModelViewSet
@@ -123,13 +123,14 @@ class AIModelViewSet(CustomModelViewSet):
     @action(methods=["GET"], detail=True, url_path="cmd")
     def cmd_template(self, request, *args, **kwargs):
         instance = self.get_object()  # type: AIModel
-        templates = get_plugin_templates()
-        if instance.key not in templates.keys():
-            return ErrorResponse(msg="找不到对应的命令模板")
-        template_class = templates[instance.key]
-        template = template_class()
-        data = template.get_plan()
-        return DetailResponse(data=data, msg="获取成功")
+        if not Worker.is_active(instance.key):
+            return ErrorResponse(msg="插件服务不在线")
+        worker = Worker.objects.get(id=instance.key)
+        res = worker.get_plan_template()
+        if res['code'] != 200:
+            return ErrorResponse(msg=res['msg'])
+
+        return DetailResponse(data=res["data"], msg="获取成功")
 
     def predict(self, request, *args, **kwargs):
         auth_header = request.META.get('HTTP_AUTHORIZATION')

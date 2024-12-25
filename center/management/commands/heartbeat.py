@@ -22,11 +22,12 @@ class Command(BaseCommand):
                     data = json.loads(message['data'])
                     worker_id = data['worker_id']
                     timestamp = data['timestamp']
+                    url = data['url']
 
                     # 更新或创建工作节点记录
                     worker, created = Worker.objects.update_or_create(
                         id=worker_id,
-                        defaults={"last_heartbeat": timestamp, "status": "healthy"}
+                        defaults={"last_heartbeat": timestamp, "url": url, "status": "healthy"}
                     )
                     print(f"Updated heartbeat for {worker_id} at {timestamp}")
                 except Exception as e:

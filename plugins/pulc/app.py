@@ -1,36 +1,56 @@
 import threading
 
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import Request, HTTPException
 
-from .heart import send_heartbeat
+from pydantic import BaseModel
+from .heart import send_heartbeat, app
 from .pulc import PULCPlugin
-from sdk.plugin_tool import PlanTemplate, ApiDocData, ArgData
-
-app = FastAPI()
+from sdk.plugin_tool import PlanTemplate, ApiDocData, ArgData, PowerData
 
 threading.Thread(target=send_heartbeat, daemon=True).start()
+
+
+class BaseResponse(BaseModel):
+    code: int
+    msg: str
+
+
+class PlanTemplateResponse(BaseResponse):
+    data: PlanTemplate
+
+
+class ApiDocDataResponse(BaseResponse):
+    data: ApiDocData
+
+
+class ArgDataResponse(BaseResponse):
+    data: list[ArgData]
+
 
 @app.get("/health")
 async def health():
     return "ok"
 
 
-@app.get("/plugin/plan/template", response_model=PlanTemplate)
+@app.get("/plugin/plan/template", response_model=PlanTemplateResponse)
 async def plan_template():
     plugin = PULCPlugin()
-    return plugin.get_plan_template()
+    data = plugin.get_plan_template()
+    return {"code": 200, "msg": "success", "data": data}
 
 
-@app.get("/plugin/api/doc", response_model=ApiDocData)
+@app.get("/plugin/api/doc", response_model=ApiDocDataResponse)
 async def plan_template():
     plugin = PULCPlugin()
-    return plugin.get_api_doc()
+    data = plugin.get_api_doc()
+    return {"code": 200, "msg": "success", "data": data}
 
 
-@app.get("/plugin/power/args", response_model=list[ArgData])
-async def plan_template(request: Request):
+@app.post("/plugin/power/args", response_model=ArgDataResponse)
+async def plan_template(request: Request, item: PowerData):
     plugin = PULCPlugin()
-    return plugin.get_power_args()
+    data = plugin.get_power_args(**item.model_dump())
+    return {"code": 200, "msg": "success", "data": data}
 
 
 @app.post("/upload")

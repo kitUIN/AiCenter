@@ -95,6 +95,28 @@ class ApiDocData(BaseModel):
     """返回示例"""
 
 
+class PlanData(BaseModel):
+    name: str
+
+
+class TaskData(BaseModel):
+    name: str
+    status: int
+    finished_datetime: str
+    number: int
+
+
+class PowerData(BaseModel):
+    ai_model: int
+    ai_model_name: str
+    id: int
+    name: str
+    configured: bool
+    key: str
+    plan: PlanData
+    task: TaskData
+
+
 def get_predict_kwargs(args: str) -> dict:
     kwargs = {}
     if args:
@@ -133,19 +155,18 @@ class BasePlugin:
         return PlanTemplate(startup=self.get_startup(*args, **kwargs),
                             args=self.get_startup_args(*args, **kwargs))
 
-    def predict(self, request: Request, text: str, image: list[PredictFile], power: AiModelPower) -> Response:
-        kwargs = get_predict_kwargs(power.args)
-        logger.info(f"能力#{power.id}({power.name})进行预测,参数:{kwargs}")
+    def predict(self, request: Request, text: str, image: list[PredictFile], kwargs) -> Response:
+        logger.info(f"进行预测,参数:{kwargs}")
         if text:
-            return self._predict_text(request, text, power, kwargs)
+            return self._predict_text(request, text, kwargs)
         elif image:
-            return self._predict_image(request, image, power, kwargs)
+            return self._predict_image(request, image, kwargs)
         return ErrorResponse(msg="未开放")
 
-    def _predict_text(self, request: Request, text: str, power: AiModelPower, kwargs: dict) -> Response:
+    def _predict_text(self, request: Request, text: str, kwargs: dict) -> Response:
         return ErrorResponse(msg="不支持文字预测")
 
-    def _predict_image(self, request: Request, image: list[PredictFile], power: AiModelPower, kwargs: dict) -> Response:
+    def _predict_image(self, request: Request, image: list[PredictFile], kwargs: dict) -> Response:
         return ErrorResponse(msg="不支持图片预测")
 
     def callback_task_success(self, task: TrainTask):
@@ -177,4 +198,5 @@ __all__ = [
     "ApiDocData",
     "ApiDocArgData",
     "PlanTemplate",
+    "PowerData",
 ]
