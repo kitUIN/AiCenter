@@ -5,7 +5,7 @@ from center.models import Worker
 from center.models.workflow import AiModelPower, AiModelPowerApiKey
 from center.serializers import AiModelPowerSerializer, AiModelPowerApiKeySerializer, AiModelPowerRetrieveSerializer
 from center.serializers.ai import AiModelPowerUpdateSerializer, AiModelPowerArgsSerializer
-from plugin import get_plugin_templates, ArgData
+from sdk.plugin_tool import ArgData
 from utils import DetailResponse, ErrorResponse
 from utils.viewset import CustomModelViewSet
 from rest_framework.decorators import action

@@ -6,8 +6,6 @@ from enums.viewset_method import ViewSetRequestMethod
 from utils import DetailResponse
 from utils.jenkins import get_jenkins_manager
 from utils.viewset import CustomModelViewSet
-from center.tasks import start_train
-
 
 class TrainPlanViewSet(CustomModelViewSet):
     queryset = TrainPlan.objects.all()

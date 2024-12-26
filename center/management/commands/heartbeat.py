@@ -20,14 +20,14 @@ class Command(BaseCommand):
             if message['type'] == 'message':
                 try:
                     data = json.loads(message['data'])
-                    worker_id = data['worker_id']
-                    timestamp = data['timestamp']
-                    url = data['url']
-
+                    worker_id = data.pop('worker_id')
+                    timestamp = data.pop('timestamp')
+                    up = {"last_heartbeat": timestamp, "status": "healthy"}
+                    up.update(data)
                     # 更新或创建工作节点记录
                     worker, created = Worker.objects.update_or_create(
                         id=worker_id,
-                        defaults={"last_heartbeat": timestamp, "url": url, "status": "healthy"}
+                        defaults=up
                     )
                     print(f"Updated heartbeat for {worker_id} at {timestamp}")
                 except Exception as e:

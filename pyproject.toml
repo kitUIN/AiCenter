@@ -31,6 +31,7 @@ drf-yasg = "^1.21.8"
 label-studio-sdk = "^1.0.7"
 fastapi = "^0.115.6"
 redis = "^5.2.1"
+requests = "^2.32.3"
 
 
 [build-system]

@@ -1,13 +1,13 @@
 import threading
 
-from fastapi import Request, HTTPException
+from fastapi import Request, HTTPException, Form, File, UploadFile
 
 from pydantic import BaseModel
-from .heart import send_heartbeat, app
+from .heart import start_heartbeat, app
 from .pulc import PULCPlugin
-from sdk.plugin_tool import PlanTemplate, ApiDocData, ArgData, PowerData
+from sdk.plugin_tool import PlanTemplate, ApiDocData, ArgData, PowerData, PredictFile
 
-threading.Thread(target=send_heartbeat, daemon=True).start()
+threading.Thread(target=start_heartbeat, daemon=True).start()
 
 
 class BaseResponse(BaseModel):
@@ -53,17 +53,25 @@ async def plan_template(request: Request, item: PowerData):
     return {"code": 200, "msg": "success", "data": data}
 
 
-@app.post("/upload")
-async def upload(request: Request):
-    content_type = request.headers.get('Content-Type')
+@app.post("/plugin/build/success")
+async def build_success(request: Request):
+    plugin = PULCPlugin()
+    plugin.callback_task_success(request.json())
+    return {"code": 200, "msg": "success"}
 
-    if content_type == "application/json":
-        data = await request.json()
-        return {"message": "Received JSON", "data": data}
 
-    elif content_type == "multipart/form-data":
-        form_data = await request.form()
-        return {"message": "Received multipart form data", "data": dict(form_data)}
-
-    else:
-        raise HTTPException(status_code=400, detail="Unsupported content type")
+@app.post("/plugin/predict")
+async def upload(request: Request, ):
+    form_data = await request.form()
+    print(form_data)
+    plugin = PULCPlugin()
+    files = []
+    kwargs = {}
+    for key, value in form_data.items():
+        print(key, value)
+        if key == "files":
+            files.append(PredictFile(name=value.filename, content=value.file.read()))
+        else:
+            kwargs[key] = value
+    res = plugin.predict(request, "", files, kwargs)
+    return res

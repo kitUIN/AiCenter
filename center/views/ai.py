@@ -1,3 +1,6 @@
+import json
+
+import requests
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from rest_framework.decorators import action
 from rest_framework.request import Request
@@ -11,6 +14,19 @@ from sdk.plugin_tool import get_predict_kwargs
 from utils import ListResponse, DetailResponse, ErrorResponse
 from utils.jenkins import get_jenkins_manager
 from utils.viewset import CustomModelViewSet
+
+
+def get_predict_kwargs(args: str) -> dict:
+    kwargs = {}
+    if args:
+        for arg in json.loads(args):
+            if arg["type"] == "file":
+                file_id = arg["value"].split("#")[-1]
+                file = TrainFile.objects.filter(id=file_id).first()
+                kwargs[arg["name"]] = file.file.path
+            else:
+                kwargs[arg["name"]] = arg["value"]
+    return kwargs
 
 
 class AIModelViewSet(CustomModelViewSet):
@@ -112,11 +128,11 @@ class AIModelViewSet(CustomModelViewSet):
     def key_simple(self, request, *args, **kwargs):
         keys = [
             {
-                "key": k,
-                "icon": v._icon,
-                "info": v._info
+                "key": w.id,
+                "icon": None,
+                "info": w.name
             }
-            for k, v in get_plugin_templates().items()
+            for w in Worker.active_all()
         ]
         return DetailResponse(data=keys, msg="获取成功")
 
@@ -141,12 +157,14 @@ class AIModelViewSet(CustomModelViewSet):
         if not api_key or (api_key and not api_key.status):
             return ErrorResponse(msg="无效的身份认证", code=401, status=401)
         power = api_key.power
-        templates = get_plugin_templates()
-        if api_key.key not in templates.keys():
-            return ErrorResponse(msg="找不到对应的模型")
+        power_args = get_predict_kwargs(power.args)
         p_file = []
         files = request.FILES.getlist('files')  # type: list[InMemoryUploadedFile]
         for file in files:
-            p_file.append(PredictFile(name=file.name, content=file.open("rb").read()))
+            p_file.append(("files", (file.name, file.open("rb").read())))
         text = request.data.get("text")
-        return templates[api_key.key]().predict(request, text, p_file, power)
+        if not Worker.is_active(api_key.key):
+            return ErrorResponse(msg="插件服务不在线")
+        worker = Worker.objects.get(id=api_key.key)
+        res = worker.predict(p_file, power_args)
+        return DetailResponse(data=res["data"], msg=res["msg"])

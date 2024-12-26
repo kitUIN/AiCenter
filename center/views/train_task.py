@@ -5,12 +5,10 @@ from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
 from rest_framework.request import Request
 
-from center.models import TrainTask, TrainPlan
+from center.models import TrainTask, TrainPlan, Worker
 from center.models.workflow import AiModelPower
 from center.serializers import TrainTaskSerializer
-from center.serializers.train_task import TrainTaskLogSerializer
 from enums import TrainTaskStatus
-from plugin import get_plugin_templates
 from utils import DetailResponse, ErrorResponse
 from utils.jenkins import get_jenkins_manager
 from utils.viewset import CustomModelViewSet
@@ -29,12 +27,6 @@ class TrainTaskViewSet(CustomModelViewSet):
         instance = self.get_object()  # type: TrainTask
         get_jenkins_manager().stop_build(instance)
         return DetailResponse(data=[], msg="发起中断任务成功")
-
-    @action(methods=["GET"], detail=True, url_path="log")
-    def log(self, request, *args, **kwargs):
-        instance = self.get_object()  # type: TrainTask
-        serializer = TrainTaskLogSerializer(instance, request=request)
-        return DetailResponse(msg="获取成功", data=serializer.data)
 
     @action(methods=["POST"], detail=False)
     def notify(self, request, *args, **kwargs):
@@ -73,9 +65,18 @@ class TrainTaskViewSet(CustomModelViewSet):
                 status=TrainTaskStatus.Succeed)
             task = TrainTask.objects.filter(plan_id=plan.id, number=data["number"]).first()
             if task:
-                templates = get_plugin_templates()
-                if plan.ai_model.key in templates.keys():
-                    templates[plan.ai_model.key]().callback_task_success(task)
+
+                if Worker.is_active(plan.ai_model.key):
+                    worker = Worker.objects.get(id=plan.ai_model.key)
+                    req_data = {
+                        "id": task.id,
+                        "name": task.plan.name,
+                        "number": task.number,
+                        "artifacts": get_jenkins_manager().get_artifacts(task)
+                    }
+                    worker.callback_build_success(req_data)
+                    AiModelPower.objects.create(name=f"未命名能力{task.id}", task_id=task.id, key=plan.ai_model.key,
+                                                args=[])
         elif data["result"] == "ABORTED":
             TrainTask.objects.filter(plan_id=plan.id, number=data["number"]).update(
                 status=TrainTaskStatus.Canceled)

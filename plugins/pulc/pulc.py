@@ -7,7 +7,7 @@ from paddleclas.deploy.python.preprocess import create_operators
 from paddleclas.deploy.utils import logger
 from paddleclas.deploy.utils.config import get_config
 from paddleclas.deploy.utils.predictor import Predictor
-
+import requests
 from sdk.plugin_tool import *
 
 
@@ -210,8 +210,8 @@ class PULCPlugin(BasePlugin):
                           method="POST", content_type="multipart/form-data", api="/predict",
                           request_body=[
                               ApiDocArgData(
-                                  name="file",
-                                  arg_type="File",
+                                  name="files",
+                                  arg_type="List[File] | File",
                                   description="需要进行预测分析的图片",
                                   required=True)
                           ],
@@ -239,3 +239,16 @@ class PULCPlugin(BasePlugin):
                                   ]
                               ),
                           ])
+
+    def callback_task_success(self, data: dict):
+        for i in data["artifacts"]:
+            r = requests.get(i["url"], stream=True)
+            filename = Path(f'artifact/{data["name"]}/{data["number"]}/{i["name"]}')
+            folder = filename.parent
+            if not folder.exists():
+                folder.mkdir(parents=True, exist_ok=True)
+            with open(filename, "wb") as f:
+                for bl in r.iter_content(chunk_size=1024):
+                    if bl:
+                        f.write(bl)
+        return {"code": 200, "msg": "success"}

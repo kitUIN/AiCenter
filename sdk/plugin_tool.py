@@ -155,24 +155,22 @@ class BasePlugin:
         return PlanTemplate(startup=self.get_startup(*args, **kwargs),
                             args=self.get_startup_args(*args, **kwargs))
 
-    def predict(self, request: Request, text: str, image: list[PredictFile], kwargs) -> Response:
+    def predict(self, request: Request, text: str, image: list[PredictFile], kwargs) -> dict:
         logger.info(f"进行预测,参数:{kwargs}")
         if text:
             return self._predict_text(request, text, kwargs)
         elif image:
             return self._predict_image(request, image, kwargs)
-        return ErrorResponse(msg="未开放")
+        return {"code": 400, "msg": "未开放"}
 
-    def _predict_text(self, request: Request, text: str, kwargs: dict) -> Response:
-        return ErrorResponse(msg="不支持文字预测")
+    def _predict_text(self, request: Request, text: str, kwargs: dict) -> dict:
+        return {"code": 400, "msg": "不支持文字预测"}
 
-    def _predict_image(self, request: Request, image: list[PredictFile], kwargs: dict) -> Response:
-        return ErrorResponse(msg="不支持图片预测")
+    def _predict_image(self, request: Request, image: list[PredictFile], kwargs: dict) -> dict:
+        return {"code": 400, "msg": "不支持图片预测"}
 
-    def callback_task_success(self, task: TrainTask):
-        AiModelPower.objects.create(name=f"未命名能力{task.id}", task_id=task.id, key=self.key, args=[])
-        get_jenkins_manager().download_task_artifacts(task)
-        return None
+    def callback_task_success(self, data: dict):
+        return {"code": 200, "msg": "success"}
 
     def get_api_doc(self, *args, **kwargs) -> ApiDocData:
         return ApiDocData(name="预测", method="POST", content_type="multipart/form-data", api="/predict", )
